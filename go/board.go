@@ -11,7 +11,7 @@ type Board struct {
 	w         int
 	h         int
 	winStreak int
-	columns   [][]Player
+	Columns   [][]Player
 }
 
 func NewBoard(options ...Option) *Board {
@@ -35,7 +35,7 @@ func NewBoard(options ...Option) *Board {
 	for i := 0; i < b.w; i++ {
 		columns = append(columns, []Player{})
 	}
-	b.columns = columns
+	b.Columns = columns
 
 	return b
 }
@@ -59,7 +59,7 @@ func WithWinStreak(winStreak int) Option {
 
 // GetCell return token at given cell coordinates (axes oriented top-right)
 func (b *Board) GetCell(x int, y int) *Player {
-	column := b.columns[x]
+	column := b.Columns[x]
 	if y >= len(column) {
 		return nil
 	}
@@ -67,11 +67,11 @@ func (b *Board) GetCell(x int, y int) *Player {
 }
 
 func (b *Board) Throw(x int, player Player) *Board {
-	column := b.columns[x]
+	column := b.Columns[x]
 	if len(column) >= b.h {
 		panic("column is already full")
 	}
-	b.columns[x] = append(column, player)
+	b.Columns[x] = append(column, player)
 	return b
 }
 
@@ -118,7 +118,7 @@ func (b *Board) String() string {
 }
 
 func (b *Board) HasWinner() *Player {
-	return nil
+	return CheckWinner(b)
 }
 
 func ParseBoard(txt string, options ...Option) *Board {
