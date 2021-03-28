@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"time"
+
+	log "github.com/inconshreveable/log15"
+)
+
 type MoveSolver struct {
 	store *EndingStore
 }
@@ -33,7 +40,9 @@ func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 }
 
 var winner *Player
+var lastBoardPrintTime time.Time
 
+// BestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) GameEnding {
 	board.Throw(move, player)
 	defer board.Revert(move)
@@ -41,6 +50,12 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 	boardKey := s.store.EvaluateKey(board)
 	if s.store.Has(boardKey) {
 		return s.store.Get(boardKey)
+	}
+
+	if time.Since(lastBoardPrintTime) >= 1*time.Second {
+		lastBoardPrintTime = time.Now()
+		log.Debug("Currently considered board:")
+		fmt.Println(board.String())
 	}
 
 	winner = board.HasWinner()
@@ -57,8 +72,8 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 	return ending
 }
 
+// NextMoveEnding finds further possible moves
 func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
-	// find further possible moves
 	possibleMovesEndings := make([]GameEnding, 0, board.w)
 	for move := 0; move < board.w; move++ {
 		if board.CanMakeMove(move) {

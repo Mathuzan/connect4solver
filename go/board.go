@@ -84,6 +84,11 @@ func (b *Board) Revert(x int) {
 	b.ColumnSizes[x]--
 }
 
+const (
+	ColouredPlayerA = "\u001b[33;1mA\u001b[0m"
+	ColouredPlayerB = "\u001b[31;1mB\u001b[0m"
+)
+
 func (b *Board) String() string {
 	lines := []string{}
 	var line string
@@ -102,7 +107,11 @@ func (b *Board) String() string {
 			if cell == nil {
 				rowCells = append(rowCells, string(CellEmpty))
 			} else {
-				rowCells = append(rowCells, string(*cell))
+				if *cell == PlayerA {
+					rowCells = append(rowCells, ColouredPlayerA)
+				} else if *cell == PlayerB {
+					rowCells = append(rowCells, ColouredPlayerB)
+				}
 			}
 		}
 		line = "| " + strings.Join(rowCells, " ") + " |"
