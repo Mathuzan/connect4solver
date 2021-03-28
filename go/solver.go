@@ -1,10 +1,13 @@
 package main
 
 type MoveSolver struct {
+	store *EndingStore
 }
 
 func NewMoveSolver() *MoveSolver {
-	return &MoveSolver{}
+	return &MoveSolver{
+		store: NewEndingStore(),
+	}
 }
 
 func (s *MoveSolver) BestEnding(board *Board) GameEnding {
@@ -35,6 +38,11 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 	board.Throw(move, player)
 	defer board.Revert(move)
 
+	boardKey := s.store.EvaluateKey(board)
+	if s.store.Has(boardKey) {
+		return s.store.Get(boardKey)
+	}
+
 	winner = board.HasWinner()
 	if winner != nil {
 		if *winner == PlayerA {
@@ -44,12 +52,14 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 		}
 	}
 
-	return s.NextMoveEnding(board, oppositePlayer(player))
+	ending := s.NextMoveEnding(board, oppositePlayer(player))
+	s.store.Put(boardKey, ending)
+	return ending
 }
 
 func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
 	// find further possible moves
-	possibleMovesEndings := []GameEnding{}
+	possibleMovesEndings := make([]GameEnding, 0, board.w)
 	for move := 0; move < board.w; move++ {
 		if board.CanMakeMove(move) {
 			moveEnding := s.BestEndingOnMove(board, player, move)
