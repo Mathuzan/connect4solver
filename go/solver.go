@@ -7,17 +7,6 @@ func NewMoveSolver() *MoveSolver {
 	return &MoveSolver{}
 }
 
-func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
-	endings := make([]GameEnding, board.w)
-	player := board.NextPlayer()
-	for move := 0; move < board.w; move++ {
-		ending := s.BestEndingOnMove(board, player, move)
-		endings[move] = ending
-	}
-
-	return endings
-}
-
 func (s *MoveSolver) BestEnding(board *Board) GameEnding {
 	endings := s.MovesEndings(board)
 	bestEnding := Lose
@@ -29,11 +18,22 @@ func (s *MoveSolver) BestEnding(board *Board) GameEnding {
 	return bestEnding
 }
 
+func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
+	endings := make([]GameEnding, board.w)
+	player := board.NextPlayer()
+	for move := 0; move < board.w; move++ {
+		ending := s.BestEndingOnMove(board, player, move)
+		endings[move] = ending
+	}
+
+	return endings
+}
+
 func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) GameEnding {
 	boardAfter := board.Clone().Throw(move, player)
 	nextPlayer := oppositePlayer(player)
 
-	winner := board.HasWinner()
+	winner := boardAfter.HasWinner()
 	if winner != nil {
 		if *winner == PlayerA {
 			return Win

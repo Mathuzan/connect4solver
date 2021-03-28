@@ -2,13 +2,23 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"runtime/pprof"
 	"time"
 
 	log "github.com/inconshreveable/log15"
 )
 
 func main() {
-	width, height := getArgs()
+	width, height, profileEnabled := getArgs()
+
+	if profileEnabled {
+		log.Info("Starting CPU profiler")
+		cpuProfile, _ := os.Create("cpuprof.prof")
+		pprof.StartCPUProfile(cpuProfile)
+		defer pprof.StopCPUProfile()
+	}
+
 	board := NewBoard(WithSize(width, height))
 	fmt.Println(board.String())
 

@@ -73,3 +73,12 @@ func TestBestResult2x2Unfair(t *testing.T) {
 	assert.Equal(t, Win,
 		solver.NextMoveEnding(board, PlayerA))
 }
+
+func BenchmarkMoveSolver(b *testing.B) {
+	board := NewBoard(WithSize(4, 4), WithWinStreak(4))
+	solver := NewMoveSolver()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		solver.BestEnding(board)
+	}
+}
