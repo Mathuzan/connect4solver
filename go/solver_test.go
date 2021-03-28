@@ -75,7 +75,7 @@ func TestBestResult2x2Unfair(t *testing.T) {
 }
 
 func BenchmarkMoveSolver(b *testing.B) {
-	board := NewBoard(WithSize(4, 4), WithWinStreak(4))
+	board := NewBoard(WithSize(3, 3), WithWinStreak(3))
 	solver := NewMoveSolver()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

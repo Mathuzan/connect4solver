@@ -39,15 +39,22 @@ func checkHorizontal(board *Board) *Player {
 		}
 	}
 
-	row := make([]*Player, board.w)
 	for y := 0; y < maxHeight; y++ {
+		var last *Player = nil
+		var e *Player = nil
+		streak := 0
 		for x := 0; x < board.w; x++ {
-			row[x] = board.GetCell(x, y)
-		}
-
-		winner := CheckSequence(board.winStreak, row)
-		if winner != nil {
-			return winner
+			e = board.GetCell(x, y)
+			if last == nil || e == nil || *e != *last {
+				streak = 0
+				last = e
+			}
+			if e != nil {
+				streak += 1
+			}
+			if streak >= board.winStreak {
+				return e
+			}
 		}
 	}
 	return nil
