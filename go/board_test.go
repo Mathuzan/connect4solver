@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEmptyBoardRender(t *testing.T) {
@@ -79,4 +81,16 @@ func TestParseBoard(t *testing.T) {
 +---------------+
 | 0 1 2 3 4 5 6 |
 `)
+}
+
+func TestNextPlayer(t *testing.T) {
+	board := ParseBoard(`
+. . . . . . .
+. . . . . . .
+. . . . . . B
+. . . A . . B
+. B . A . . A
+. A . A . . B
+`)
+	assert.EqualValues(t, PlayerB, board.NextPlayer())
 }

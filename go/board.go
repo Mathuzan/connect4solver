@@ -121,6 +121,25 @@ func (b *Board) HasWinner() *Player {
 	return CheckWinner(b)
 }
 
+func (b *Board) NextPlayer() Player {
+	tokensA := 0
+	tokensB := 0
+	for _, column := range b.Columns {
+		for _, cell := range column {
+			if cell == PlayerA {
+				tokensA++
+			} else if cell == PlayerB {
+				tokensB++
+			}
+		}
+	}
+	if tokensA > tokensB {
+		return PlayerB
+	} else {
+		return PlayerA
+	}
+}
+
 func ParseBoard(txt string, options ...Option) *Board {
 	txt = strings.TrimSpace(txt)
 	lines := strings.Split(txt, "\n")
