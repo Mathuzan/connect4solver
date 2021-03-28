@@ -22,8 +22,8 @@ func CheckWinner(board *Board) *Player {
 }
 
 func checkVertical(board *Board) *Player {
-	for _, column := range board.Columns {
-		winner := checkContinuousSequence(board, column)
+	for i, column := range board.Columns {
+		winner := checkContinuousSequence(board, column, board.ColumnSizes[i])
 		if winner != nil {
 			return winner
 		}
@@ -33,9 +33,9 @@ func checkVertical(board *Board) *Player {
 
 func checkHorizontal(board *Board) *Player {
 	maxHeight := 0
-	for _, column := range board.Columns {
-		if len(column) > maxHeight {
-			maxHeight = len(column)
+	for _, colsize := range board.ColumnSizes {
+		if colsize > maxHeight {
+			maxHeight = colsize
 		}
 	}
 
@@ -146,22 +146,22 @@ func CheckSequence(winStreak int, seq []*Player) *Player {
 	return nil
 }
 
-func checkContinuousSequence(board *Board, seq []Player) *Player {
-	if len(seq) < board.winStreak {
+func checkContinuousSequence(board *Board, seq []*Player, colsize int) *Player {
+	if colsize < board.winStreak {
 		return nil
 	}
 
-	last := seq[0]
+	last := *seq[0]
 	streak := 1
-	for i := 1; i < len(seq); i++ {
-		if seq[i] != last {
+	for i := 1; i < colsize; i++ {
+		if *seq[i] != last {
 			streak = 1
-			last = seq[i]
+			last = *seq[i]
 			continue
 		}
 		streak += 1
 		if streak >= board.winStreak {
-			return &seq[i]
+			return seq[i]
 		}
 	}
 	return nil

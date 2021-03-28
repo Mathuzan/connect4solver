@@ -13,6 +13,6 @@ go test -v
 
 ## Profiling
 ```bash
-./c4solver -profile
+go build && ./c4solver -profile
 go tool pprof -http=:8080 cpuprof.prof
 ```

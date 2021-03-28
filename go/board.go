@@ -8,10 +8,11 @@ import (
 )
 
 type Board struct {
-	w         int
-	h         int
-	winStreak int
-	Columns   [][]Player
+	w           int
+	h           int
+	winStreak   int
+	Columns     [][]*Player
+	ColumnSizes []int
 }
 
 func NewBoard(options ...Option) *Board {
@@ -31,11 +32,12 @@ func NewBoard(options ...Option) *Board {
 	}
 
 	// validate & post-process
-	columns := [][]Player{}
-	for i := 0; i < b.w; i++ {
-		columns = append(columns, []Player{})
+	b.Columns = make([][]*Player, b.w)
+	b.ColumnSizes = make([]int, b.w)
+	for x := 0; x < b.w; x++ {
+		b.Columns[x] = make([]*Player, b.h)
+		b.ColumnSizes[x] = 0
 	}
-	b.Columns = columns
 
 	return b
 }
@@ -60,19 +62,26 @@ func WithWinStreak(winStreak int) Option {
 // GetCell return token at given cell coordinates (axes oriented top-right)
 func (b *Board) GetCell(x int, y int) *Player {
 	column := b.Columns[x]
-	if y >= len(column) {
+	if y >= b.ColumnSizes[x] {
 		return nil
 	}
-	return &column[y]
+	return column[y]
 }
 
 func (b *Board) Throw(x int, player Player) *Board {
-	column := b.Columns[x]
-	if len(column) >= b.h {
+	if b.ColumnSizes[x] >= b.h {
 		panic("column is already full")
 	}
-	b.Columns[x] = append(column, player)
+	b.Columns[x][b.ColumnSizes[x]] = &player
+	b.ColumnSizes[x]++
 	return b
+}
+
+func (b *Board) Revert(x int) {
+	if b.ColumnSizes[x] <= 0 {
+		panic("cant pull out from empty column")
+	}
+	b.ColumnSizes[x]--
 }
 
 func (b *Board) String() string {
@@ -124,11 +133,12 @@ func (b *Board) HasWinner() *Player {
 func (b *Board) NextPlayer() Player {
 	tokensA := 0
 	tokensB := 0
-	for _, column := range b.Columns {
-		for _, cell := range column {
-			if cell == PlayerA {
+	for x, column := range b.Columns {
+		for y := 0; y < b.ColumnSizes[x]; y++ {
+			cell := column[y]
+			if *cell == PlayerA {
 				tokensA++
-			} else if cell == PlayerB {
+			} else if *cell == PlayerB {
 				tokensB++
 			}
 		}
@@ -141,21 +151,24 @@ func (b *Board) NextPlayer() Player {
 }
 
 func (b *Board) CanMakeMove(x int) bool {
-	return len(b.Columns[x]) < b.h
+	return b.ColumnSizes[x] < b.h
 }
 
 func (b *Board) Clone() *Board {
-	columns := make([][]Player, b.w)
-	for c := 0; c < b.w; c++ {
-		columns[c] = make([]Player, len(b.Columns[c]))
-		copy(columns[c], b.Columns[c])
+	columns := make([][]*Player, b.w)
+	columnSizes := make([]int, b.w)
+	for x := 0; x < b.w; x++ {
+		columnSizes[x] = b.ColumnSizes[x]
+		columns[x] = make([]*Player, b.h)
+		copy(columns[x], b.Columns[x])
 	}
 
 	return &Board{
-		w:         b.w,
-		h:         b.h,
-		winStreak: b.winStreak,
-		Columns:   columns,
+		w:           b.w,
+		h:           b.h,
+		winStreak:   b.winStreak,
+		Columns:     columns,
+		ColumnSizes: columnSizes,
 	}
 }
 
