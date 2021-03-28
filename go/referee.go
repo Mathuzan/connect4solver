@@ -154,15 +154,14 @@ func checkContinuousSequence(board *Board, seq []Player) *Player {
 	last := seq[0]
 	streak := 1
 	for i := 1; i < len(seq); i++ {
-		e := seq[i]
-		if e != last {
+		if seq[i] != last {
 			streak = 1
-			last = e
+			last = seq[i]
 			continue
 		}
 		streak += 1
 		if streak >= board.winStreak {
-			return &e
+			return &seq[i]
 		}
 	}
 	return nil
