@@ -1,4 +1,4 @@
-package c4solver
+package main
 
 import (
 	"flag"

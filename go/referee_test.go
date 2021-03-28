@@ -1,4 +1,4 @@
-package c4solver
+package main
 
 import (
 	"testing"
@@ -7,12 +7,12 @@ import (
 )
 
 func TestNobodyWon(t *testing.T) {
-	board := Board(8, 7)
+	board := NewBoard(WithSize(7, 6))
 	assert.Equal(t,
 		nil,
-		board.winner())
+		board.HasWinner())
 
-	board := ParseBoard(`
+	board = ParseBoard(`
 	. . . . . . .
 	. . . . . . .
 	. . . . . . B
@@ -20,7 +20,7 @@ func TestNobodyWon(t *testing.T) {
 	. B . B A . A
 	. A . A B . B
 	`)
-	assert.Equal(t, nil, board.winner())
+	assert.Equal(t, nil, board.HasWinner())
 }
 
 func TestWonVertical(t *testing.T) {
@@ -32,7 +32,7 @@ func TestWonVertical(t *testing.T) {
 	. B . . . . A
 	. A . A . . A
 	`)
-	assert.Equal(t, PlayerA, board.winner())
+	assert.Equal(t, PlayerA, board.HasWinner())
 }
 
 func TestWonHorizontal(t *testing.T) {
@@ -44,7 +44,7 @@ func TestWonHorizontal(t *testing.T) {
 	. B . B B B B
 	A A . A B B A
 	`)
-	assert.Equal(t, PlayerB, board.winner())
+	assert.Equal(t, PlayerB, board.HasWinner())
 }
 
 func TestWonDiagonal(t *testing.T) {
@@ -56,9 +56,9 @@ func TestWonDiagonal(t *testing.T) {
 	. B . B A B B
 	A A . A B B A
 	`)
-	assert.Equal(t, PlayerA, board.winner())
+	assert.Equal(t, PlayerA, board.HasWinner())
 
-	board := ParseBoard(`
+	board = ParseBoard(`
 	. . . . . . .
 	. . . . . . .
 	. B . . . . B
@@ -66,9 +66,9 @@ func TestWonDiagonal(t *testing.T) {
 	. B A B A B B
 	A B A A B B A
 	`)
-	assert.Equal(t, PlayerB, board.winner())
+	assert.Equal(t, PlayerB, board.HasWinner())
 
-	board := ParseBoard(`
+	board = ParseBoard(`
 	. . . B . . .
 	. . B B . . .
 	. B B B . . B
@@ -76,7 +76,7 @@ func TestWonDiagonal(t *testing.T) {
 	A A A B . B .
 	A A B A . B A
 	`)
-	assert.Equal(t, PlayerB, board.winner())
+	assert.Equal(t, PlayerB, board.HasWinner())
 }
 
 func TestMinStreakCondition(t *testing.T) {
@@ -84,6 +84,6 @@ func TestMinStreakCondition(t *testing.T) {
 ...
 .A.
 AAB
-`, MinStreakCondition(2))
-	assert.Equal(t, PlayerA, board.winner())
+`, WithWinStreak(2))
+	assert.Equal(t, PlayerA, board.HasWinner())
 }

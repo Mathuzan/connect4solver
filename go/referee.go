@@ -1,1 +1,1 @@
-package c4solver
+package main

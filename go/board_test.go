@@ -1,4 +1,4 @@
-package c4solver
+package main
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestEmptyBoardRender(t *testing.T) {
-	board := Board()
+	board := NewBoard(WithSize(7, 6))
 	rendered := board.String()
 	assert.Equal(t, `
 +---------------+
@@ -25,8 +25,8 @@ func TestEmptyBoardRender(t *testing.T) {
 }
 
 func TestRenderGridWithTokens(t *testing.T) {
-	board := Board()
-	board.throw(1, PlayerA).throw(1, PlayerB).throw(3, PlayerA)
+	board := NewBoard(WithSize(7, 6))
+	board.Throw(1, PlayerA).Throw(1, PlayerB).Throw(3, PlayerA)
 	rendered := board.String()
 	assert.Equal(t, `
 +---------------+
@@ -73,7 +73,7 @@ func TestParseBoard(t *testing.T) {
 	. B . . . . A
 	. A . A . . B
 	`)
-	rendered := board.String()
+	rendered = board.String()
 	assert.Equal(t, `
 +---------------+
 | . . . . . . . |

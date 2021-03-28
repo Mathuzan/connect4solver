@@ -1,8 +1,9 @@
-package c4solver
+package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBestResultSimplest4(t *testing.T) {
@@ -12,19 +13,19 @@ func TestBestResultSimplest4(t *testing.T) {
 	ABAB
 	ABAB
 	`)
-	solver := MoveSolver()
+	solver := NewMoveSolver()
 
 	assert.Equal(t, Win,
-		solver.BestResultOnMove(grid, PlayerA, 0))
+		solver.BestEndingOnMove(board, PlayerA, 0))
 	assert.Equal(t, Lose,
-		solver.BestResultOnMove(grid, PlayerA, 1))
+		solver.BestEndingOnMove(board, PlayerA, 1))
 	assert.Equal(t, Win,
-		solver.BestResultOnMove(grid, PlayerA, 2))
+		solver.BestEndingOnMove(board, PlayerA, 2))
 	assert.Equal(t, Lose,
-		solver.BestResultOnMove(grid, PlayerA, 3))
-	
+		solver.BestEndingOnMove(board, PlayerA, 3))
+
 	assert.Equal(t, Win,
-		solver.BestResult(board))
+		solver.BestEnding(board))
 }
 
 func TestBestResultSimpleTie(t *testing.T) {
@@ -34,33 +35,33 @@ func TestBestResultSimpleTie(t *testing.T) {
 	AB
 	AB
 	`)
-	solver := MoveSolver()
+	solver := NewMoveSolver()
 
 	assert.Equal(t, Win,
-		solver.BestResultOnMove(grid, PlayerA, 0))
+		solver.BestEndingOnMove(board, PlayerA, 0))
 	assert.Equal(t, Tie,
-		solver.BestResultOnMove(grid, PlayerA, 1))
-	
+		solver.BestEndingOnMove(board, PlayerA, 1))
+
 	assert.Equal(t, Win,
-		solver.BestResult(board))
+		solver.BestEnding(board))
 }
 
 func TestBestResult3x3(t *testing.T) {
-	board := NewBoard(3, 3, min_win=3)
-	solver := MoveSolver()
-	results := solver.MovesResults(board)
+	board := NewBoard(WithSize(3, 3), WithWinStreak(3))
+	solver := NewMoveSolver()
+	endings := solver.MovesEndings(board)
 
-	assert.Equal(t, []rune{Tie, Tie, Tie},
-		results)
+	assert.Equal(t, []GameEnding{Tie, Tie, Tie},
+		endings)
 }
 
 func TestBestResult3x3Unfair(t *testing.T) {
-	board := NewBoard(3, 3, min_win=2)
-	solver := MoveSolver()
-	results := solver.MovesResults(board)
+	board := NewBoard(WithSize(3, 3), WithWinStreak(2))
+	solver := NewMoveSolver()
+	endings := solver.MovesEndings(board)
 
 	assert.Equal(t, Win,
-		solver.BestResultOnMove(grid, PlayerA, 1))
-	assert.Equal(t, []rune{Win, Win, Win},
-		results)
+		solver.BestEndingOnMove(board, PlayerA, 1))
+	assert.Equal(t, []GameEnding{Win, Win, Win},
+		endings)
 }
