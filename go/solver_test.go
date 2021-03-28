@@ -65,3 +65,11 @@ func TestBestResult3x3Unfair(t *testing.T) {
 	assert.Equal(t, []GameEnding{Win, Win, Win},
 		endings)
 }
+
+func TestBestResult2x2Unfair(t *testing.T) {
+	board := NewBoard(WithSize(2, 2), WithWinStreak(2))
+	solver := NewMoveSolver()
+
+	assert.Equal(t, Win,
+		solver.NextMoveEnding(board, PlayerA))
+}

@@ -94,3 +94,10 @@ func TestNextPlayer(t *testing.T) {
 `)
 	assert.EqualValues(t, PlayerB, board.NextPlayer())
 }
+
+func TestBoardOptions(t *testing.T) {
+	board := NewBoard(WithSize(4, 3), WithWinStreak(2))
+	assert.EqualValues(t, 4, board.w)
+	assert.EqualValues(t, 3, board.h)
+	assert.EqualValues(t, 2, board.winStreak)
+}

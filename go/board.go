@@ -140,6 +140,25 @@ func (b *Board) NextPlayer() Player {
 	}
 }
 
+func (b *Board) CanMakeMove(x int) bool {
+	return len(b.Columns[x]) < b.h
+}
+
+func (b *Board) Clone() *Board {
+	columns := make([][]Player, b.w)
+	for c := 0; c < b.w; c++ {
+		columns[c] = make([]Player, len(b.Columns[c]))
+		copy(columns[c], b.Columns[c])
+	}
+
+	return &Board{
+		w:         b.w,
+		h:         b.h,
+		winStreak: b.winStreak,
+		Columns:   columns,
+	}
+}
+
 func ParseBoard(txt string, options ...Option) *Board {
 	txt = strings.TrimSpace(txt)
 	lines := strings.Split(txt, "\n")
