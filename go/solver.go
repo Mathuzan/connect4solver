@@ -8,12 +8,12 @@ import (
 )
 
 type MoveSolver struct {
-	store *EndingStore
+	cache *EndingStore
 }
 
 func NewMoveSolver() *MoveSolver {
 	return &MoveSolver{
-		store: NewEndingStore(),
+		cache: NewEndingStore(),
 	}
 }
 
@@ -47,15 +47,14 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 	board.Throw(move, player)
 	defer board.Revert(move)
 
-	boardKey := s.store.EvaluateKey(board)
-	if s.store.Has(boardKey) {
-		return s.store.Get(boardKey)
+	boardKey := s.cache.EvaluateKey(board)
+	if s.cache.Has(boardKey) {
+		return s.cache.Get(boardKey)
 	}
 
-	if time.Since(lastBoardPrintTime) >= 1*time.Second {
+	if time.Since(lastBoardPrintTime) >= 2*time.Second {
 		lastBoardPrintTime = time.Now()
-		log.Debug("Currently considered board:")
-		fmt.Println(board.String())
+		ReportStatus(board, s.cache)
 	}
 
 	winner = board.HasWinner()
@@ -68,7 +67,7 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 	}
 
 	ending := s.NextMoveEnding(board, oppositePlayer(player))
-	s.store.Put(boardKey, ending)
+	s.cache.Put(boardKey, ending)
 	return ending
 }
 
@@ -126,4 +125,11 @@ func minPossibleMove(endings []GameEnding) GameEnding {
 		}
 	}
 	return minr
+}
+
+func ReportStatus(board *Board, cache *EndingStore) {
+	log.Debug("Currently considered board", log.Ctx{
+		"cacheSize": cache.Size(),
+	})
+	fmt.Println(board.String())
 }

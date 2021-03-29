@@ -38,3 +38,7 @@ func (s *EndingStore) Get(key string) GameEnding {
 func (s *EndingStore) Put(key string, ending GameEnding) {
 	s.cache[key] = ending
 }
+
+func (s *EndingStore) Size() int {
+	return len(s.cache)
+}
