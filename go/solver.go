@@ -8,12 +8,12 @@ import (
 )
 
 type MoveSolver struct {
-	cache *EndingStore
+	cache *EndingCache
 }
 
 func NewMoveSolver() *MoveSolver {
 	return &MoveSolver{
-		cache: NewEndingStore(),
+		cache: NewEndingCache(),
 	}
 }
 
@@ -127,7 +127,7 @@ func minPossibleMove(endings []GameEnding) GameEnding {
 	return minr
 }
 
-func ReportStatus(board *Board, cache *EndingStore) {
+func ReportStatus(board *Board, cache *EndingCache) {
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize": cache.Size(),
 	})
