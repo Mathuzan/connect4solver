@@ -1,5 +1,12 @@
+# Dev
+.idea
+
+# Python
 .coverage
 .pytest_cache/
 __pycache__/
 
-.idea
+# Go
+go.sum
+**/c4solver
+cpuprof.prof
