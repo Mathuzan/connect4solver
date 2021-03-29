@@ -73,30 +73,36 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 
 // NextMoveEnding finds further possible moves
 func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
-	possibleMovesEndings := make([]GameEnding, 0, board.w)
+	var bestEnding *GameEnding = nil
 	for move := 0; move < board.w; move++ {
 		if board.CanMakeMove(move) {
 			moveEnding := s.BestEndingOnMove(board, player, move)
-			if player == PlayerA && moveEnding == Win {
-				return Win
-			}
-			if player == PlayerB && moveEnding == Lose {
-				return Lose
-			}
 
-			possibleMovesEndings = append(possibleMovesEndings, moveEnding)
+			if player == PlayerA {
+				// player A chooses highest possible move
+				if moveEnding == Win { // short-circuit, cant be better
+					return Win
+				}
+				if bestEnding == nil || MoveResultsWeights[moveEnding] > MoveResultsWeights[*bestEnding] {
+					bestEnding = &moveEnding
+				}
+			} else {
+				// player B chooses worst possible move
+				if moveEnding == Lose { // short-circuit, cant be worse
+					return Lose
+				}
+				if bestEnding == nil || MoveResultsWeights[moveEnding] < MoveResultsWeights[*bestEnding] {
+					bestEnding = &moveEnding
+				}
+			}
 		}
 	}
 
-	if len(possibleMovesEndings) == 0 {
+	if bestEnding == nil {
 		return Tie
 	}
 
-	if player == PlayerA {
-		return maxPossibleMove(possibleMovesEndings)
-	} else {
-		return minPossibleMove(possibleMovesEndings)
-	}
+	return *bestEnding
 }
 
 func oppositePlayer(player Player) Player {
