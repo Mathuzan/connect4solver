@@ -27,3 +27,11 @@ var MoveResultsWeights = map[GameEnding]int{
 	Tie:  0,
 	Lose: -1,
 }
+
+func (p Player) String() string {
+	return string(p)
+}
+
+func (e GameEnding) String() string {
+	return string(e)
+}

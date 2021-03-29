@@ -27,7 +27,7 @@ func main() {
 	solver := NewMoveSolver()
 	endings := solver.MovesEndings(board)
 	for move, ending := range endings {
-		log.Info("Move ending", log.Ctx{"move": move, "result": ending})
+		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, ending))
 	}
 
 	totalElapsed := time.Since(startTime)
