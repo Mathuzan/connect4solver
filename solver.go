@@ -117,11 +117,11 @@ func (s *MoveSolver) bestEndingOnMove(
 
 	// find further possible moves
 	var bestEnding *GameEnding = nil
-	for move := 0; move < board.w; move++ {
-		if board.CanMakeMove(move) {
-			moveEnding := s.bestEndingOnMove(board, nextPlayer, move,
-				progressStart+float64(move)*(progressEnd-progressStart)/float64(board.w),
-				progressStart+float64(move+1)*(progressEnd-progressStart)/float64(board.w),
+	for moveIndex := 0; moveIndex < board.w; moveIndex++ {
+		if board.CanMakeMove(s.movesOrder[moveIndex]) {
+			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+				progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.w),
+				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.w),
 				depth+1,
 			)
 
