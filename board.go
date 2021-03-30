@@ -61,18 +61,16 @@ func WithWinStreak(winStreak int) Option {
 	}
 }
 
-var colSize int
-
 // GetCell return token at given cell coordinates (axes oriented top-right)
 func (b *Board) GetCell(x int, y int) Player {
-	if b.state[x]>>(y+1) == 0 {
+	if b.state[x]>>y <= 1 {
 		return Empty
 	}
 	return Player((b.state[x] >> y) & 0b1)
 }
 
 func (b *Board) Throw(x int, player Player) {
-	colSize = 7 - bits.LeadingZeros8(b.state[x])
+	colSize := b.stackSize(x)
 	if colSize >= b.h {
 		panic("column is already full")
 	}
@@ -84,7 +82,7 @@ func (b *Board) Revert(x int) {
 	if b.state[x] == 0b1 {
 		panic("cant pull out from empty column")
 	}
-	colSize = 7 - bits.LeadingZeros8(b.state[x])
+	colSize := b.stackSize(x)
 	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize - 1))
 }
 

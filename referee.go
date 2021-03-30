@@ -127,23 +127,39 @@ func checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
 }
 
 // checkColumnSequence checks if there's a winning streak
+// input: 						     ooooI1111010001111
+// Find 4 consecutive ones
+//								>>1: 0ooooI111101000111
+//      				   & (>> 1): 0ooooI111000000111
+// Find 3 consecutive ones
+// 							   >> 1: 00ooooI11110100011
+//      				   & (>> 1): 00ooooI11000000011
+// Find 2 consecutive ones
+// 							   >> 1: 000ooooI1100000001
+//      				   & (>> 1): 000ooooI1000000001
+// Clear first bits, get last (stack size - (winStreak-1)): & ((1 << (stacksize - (winStreak-1))) -1):
+//								  &: 000oooo01111111111
+// Is different than 0?
 func checkColumnSequence(board *Board, columnState uint8, stackSize int) Player {
 	if stackSize < board.winStreak {
 		return Empty
 	}
 
-	lastToken = columnState & 0b1
-	sameStreak = 1
-	for y := 1; y < stackSize; y++ {
-		if (columnState>>y)&0b1 != lastToken {
-			sameStreak = 1
-			lastToken = (columnState >> y) & 0b1
-			continue
-		}
-		sameStreak += 1
-		if sameStreak >= board.winStreak {
-			return Player(lastToken)
-		}
+	onesB := columnState
+	onesA := ^columnState
+
+	for i := 0; i < board.winStreak-1; i++ {
+		onesB &= onesB >> 1
+		onesA &= onesA >> 1
+	}
+
+	var mask uint8 = (1 << (stackSize - (board.winStreak - 1))) - 1
+
+	if onesA&mask != 0 {
+		return PlayerA
+	}
+	if onesB&mask != 0 {
+		return PlayerB
 	}
 	return Empty
 }

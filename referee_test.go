@@ -86,3 +86,40 @@ AAB
 `, WithWinStreak(2))
 	assert.EqualValues(t, PlayerA, board.HasWinner())
 }
+
+func TestCheckVertical(t *testing.T) {
+	board := ParseBoard(".\n.\n.\n.\n.\n.")
+	assert.EqualValues(t, Empty, checkVertical(board))
+
+	board = ParseBoard(".\n.\n.\n.\n.\nA")
+	assert.EqualValues(t, Empty, checkVertical(board))
+	board = ParseBoard(".\n.\n.\n.\nB\nA")
+	assert.EqualValues(t, Empty, checkVertical(board))
+	board = ParseBoard(".\n.\n.\nA\nA\nA")
+	assert.EqualValues(t, Empty, checkVertical(board))
+	board = ParseBoard(".\nA\nB\nB\nA\nA")
+	assert.EqualValues(t, Empty, checkVertical(board))
+	board = ParseBoard("B\nB\nB\nA\nA\nA")
+	assert.EqualValues(t, Empty, checkVertical(board))
+
+	board = ParseBoard("B\nB\nB\nB\nB\nB")
+	assert.EqualValues(t, PlayerB, checkVertical(board))
+	board = ParseBoard("A\nA\nA\nA\nA\nA")
+	assert.EqualValues(t, PlayerA, checkVertical(board))
+
+	board = ParseBoard(".\n.\nA\nA\nA\nA")
+	assert.EqualValues(t, PlayerA, checkVertical(board))
+	board = ParseBoard(".\n.\nB\nB\nB\nB")
+	assert.EqualValues(t, PlayerB, checkVertical(board))
+
+	board = ParseBoard(".\nB\nB\nB\nB\nA")
+	assert.EqualValues(t, PlayerB, checkVertical(board))
+	board = ParseBoard("B\nB\nB\nB\nA\nA")
+	assert.EqualValues(t, PlayerB, checkVertical(board))
+
+	board = ParseBoard("A\nB\nB\nB\nB\nA")
+	assert.EqualValues(t, PlayerB, checkVertical(board))
+
+	board = ParseBoard("A\nA\nA\nA\nB\nA")
+	assert.EqualValues(t, PlayerA, checkVertical(board))
+}
