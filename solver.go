@@ -24,7 +24,7 @@ type MoveSolver struct {
 const progressBarResolution = 1000000000
 
 func NewMoveSolver(board *Board) *MoveSolver {
-	maxCacheDepth := uint(24)
+	maxCacheDepth := uint(27)
 
 	log.Debug("Parameters set", log.Ctx{
 		"maxCacheDepth": maxCacheDepth,
@@ -35,7 +35,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	})
 
 	return &MoveSolver{
-		cache:                NewEndingCache(maxCacheDepth, board.w),
+		cache:                NewEndingCache(maxCacheDepth, board.w, board.h),
 		lastBoardPrintTime:   time.Now(),
 		progressBar:          progressbar.Default(progressBarResolution),
 		cachedDepthHistogram: map[uint]uint64{},
@@ -92,7 +92,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	defer board.Revert(move)
 
 	if depth <= s.cache.maxCacheDepth {
-		ending, ok := s.cache.Get(board)
+		ending, ok := s.cache.Get(board, depth)
 		if ok {
 			s.cacheUsages++
 			return ending
@@ -101,7 +101,7 @@ func (s *MoveSolver) bestEndingOnMove(
 
 	if s.iterations%10000 == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
-		s.ReportStatus(board, progressStart, progressEnd)
+		s.ReportStatus(board, depth, progressStart, progressEnd)
 	}
 
 	s.winner = board.HasWinner()
@@ -160,13 +160,17 @@ func oppositePlayer(player Player) Player {
 
 func (s *MoveSolver) ReportStatus(
 	board *Board,
+	depth uint,
 	progressStart float64,
 	progressEnd float64,
 ) {
 	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize":   s.cache.Size(),
-		"iterations":  s.iterations,
-		"cacheUsages": s.cacheUsages,
+		"cacheSize":     s.cache.Size(),
+		"iterations":    s.iterations,
+		"cacheUsages":   s.cacheUsages,
+		"progressStart": progressStart,
+		"progressEnd":   progressEnd,
+		"depth":         depth,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {

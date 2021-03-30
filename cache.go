@@ -1,17 +1,23 @@
 package main
 
 type EndingCache struct {
-	cache         map[BoardKey]GameEnding
+	depthCaches   map[uint]map[BoardKey]GameEnding
 	maxCacheDepth uint
+	cachedEntries uint64
 
 	boardW  int
 	boardW1 int
 	sideW   int
 }
 
-func NewEndingCache(maxCacheDepth uint, boardW int) *EndingCache {
+func NewEndingCache(maxCacheDepth uint, boardW int, boardH int) *EndingCache {
+	depthCaches := make(map[uint]map[BoardKey]GameEnding)
+	for i := uint(0); i < uint(boardW*boardH); i++ {
+		depthCaches[i] = make(map[BoardKey]GameEnding)
+	}
+
 	return &EndingCache{
-		cache:         make(map[BoardKey]GameEnding),
+		depthCaches:   depthCaches,
 		maxCacheDepth: maxCacheDepth,
 		boardW:        boardW,
 		boardW1:       boardW - 1,
@@ -19,21 +25,22 @@ func NewEndingCache(maxCacheDepth uint, boardW int) *EndingCache {
 	}
 }
 
-func (s *EndingCache) Get(board *Board) (GameEnding, bool) {
-	ending, ok := s.cache[s.reflectedBoardKey(board.state)]
-	return ending, ok
+func (s *EndingCache) Get(board *Board, depth uint) (ending GameEnding, ok bool) {
+	ending, ok = s.depthCaches[depth][s.reflectedBoardKey(board.state)]
+	return
 }
 
 func (s *EndingCache) Put(board *Board, depth uint, ending GameEnding) GameEnding {
 	if depth > s.maxCacheDepth {
 		return ending
 	}
-	s.cache[s.reflectedBoardKey(board.state)] = ending
+	s.depthCaches[depth][s.reflectedBoardKey(board.state)] = ending
+	s.cachedEntries++
 	return ending
 }
 
-func (s *EndingCache) Size() int {
-	return len(s.cache)
+func (s *EndingCache) Size() uint64 {
+	return s.cachedEntries
 }
 
 func (s *EndingCache) reflectedBoardKey(key BoardKey) BoardKey {

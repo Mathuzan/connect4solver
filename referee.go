@@ -3,8 +3,7 @@ package main
 import "math/bits"
 
 var winner Player
-var lastToken uint8
-var lastTokenPlayer Player
+var lastToken Player
 var currentToken Player
 var sameStreak int
 var stacksSum uint8
@@ -46,14 +45,14 @@ func checkHorizontal(board *Board) Player {
 	}
 
 	for y := 0; y < 7-bits.LeadingZeros8(stacksSum); y++ {
-		lastTokenPlayer = board.GetCell(0, y)
+		lastToken = board.GetCell(0, y)
 		sameStreak = 1
 
 		for x := 1; x < board.w; x++ {
 			currentToken = board.GetCell(x, y)
-			if lastTokenPlayer == Empty || currentToken == Empty || currentToken != lastTokenPlayer {
+			if lastToken == Empty || currentToken == Empty || currentToken != lastToken {
 				sameStreak = 0
-				lastTokenPlayer = currentToken
+				lastToken = currentToken
 			}
 			if currentToken != Empty {
 				sameStreak += 1
@@ -101,15 +100,15 @@ func checkDiagonals(board *Board) Player {
 }
 
 func checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
-	lastTokenPlayer = board.GetCell(xstart, ystart)
+	lastToken = board.GetCell(xstart, ystart)
 	sameStreak = 1
 	x := xstart + xstep
 	y := ystart + 1
 	for {
 		currentToken = board.GetCell(x, y)
-		if lastTokenPlayer == Empty || currentToken == Empty || currentToken != lastTokenPlayer {
+		if lastToken == Empty || currentToken == Empty || currentToken != lastToken {
 			sameStreak = 0
-			lastTokenPlayer = currentToken
+			lastToken = currentToken
 		}
 		if currentToken != Empty {
 			sameStreak += 1

@@ -34,15 +34,15 @@ A . B A A
 . B . . A
 A A B . A
 `)
-	cache := NewEndingCache(999, 5)
+	cache := NewEndingCache(999, 5, 3)
 
 	cache.Put(boardL, 7, Win)
 
-	end, ok := cache.Get(boardL)
+	end, ok := cache.Get(boardL, 7)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, Win, end)
 
-	end, ok = cache.Get(boardR)
+	end, ok = cache.Get(boardR, 7)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, Win, end)
 }
