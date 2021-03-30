@@ -1,5 +1,5 @@
 # c4solver
-Connect 4 Game solver in Go.
+Connect 4 Game solver in Go. It finds winning strategy in "Connect Four" game (also known as "Four in a row")
 
 ## Building & Running
 ```bash
