@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	width, height, profileEnabled := getArgs()
+	width, height, winStreak, profileEnabled := getArgs()
 
 	if profileEnabled {
 		log.Info("Starting CPU profiler")
@@ -19,7 +19,7 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	board := NewBoard(WithSize(width, height))
+	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
 	fmt.Println(board.String())
 
 	fmt.Println("Finding moves results...")

@@ -17,20 +17,22 @@ type MoveSolver struct {
 	maxCacheDepth      uint
 
 	iterations           uint64
-	cachedIterations     uint64
+	cacheUsages          uint64
 	cachedDepthHistogram map[uint]uint64
+	movesOrder           []int
 }
 
 const progressBarResolution = 1000000000
 
 func NewMoveSolver(board *Board) *MoveSolver {
-	maxCacheDepth := uint(22)
+	maxCacheDepth := uint(24)
 
 	log.Debug("Parameters set", log.Ctx{
 		"maxCacheDepth": maxCacheDepth,
 		"width":         board.w,
 		"height":        board.h,
 		"winStreak":     board.winStreak,
+		"movesOrder":    CalculateMovesOrder(board),
 	})
 
 	return &MoveSolver{
@@ -39,6 +41,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 		progressBar:          progressbar.Default(progressBarResolution),
 		cachedDepthHistogram: map[uint]uint64{},
 		maxCacheDepth:        maxCacheDepth,
+		movesOrder:           CalculateMovesOrder(board),
 	}
 }
 
@@ -93,7 +96,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	if depth <= s.maxCacheDepth {
 		ending, ok := s.cache.Get(board)
 		if ok {
-			s.cachedIterations++
+			s.cacheUsages++
 			return ending
 		}
 	}
@@ -175,9 +178,9 @@ func (s *MoveSolver) ReportStatus(
 	progressEnd float64,
 ) {
 	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize":        s.cache.Size(),
-		"iterations":       s.iterations,
-		"cachedIterations": s.cachedIterations,
+		"cacheSize":   s.cache.Size(),
+		"iterations":  s.iterations,
+		"cacheUsages": s.cacheUsages,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
@@ -191,4 +194,19 @@ func (s *MoveSolver) BestEndingOnMove(
 	move int,
 ) GameEnding {
 	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
+}
+
+func CalculateMovesOrder(board *Board) []int {
+	movesOrder := []int{}
+	pivot := board.w / 2
+	for x := 0; x < board.w; x++ {
+		var move int
+		if x%2 == 0 {
+			move = pivot - (x+1)/2
+		} else {
+			move = (pivot + (x+1)/2) % board.w
+		}
+		movesOrder = append(movesOrder, move)
+	}
+	return movesOrder
 }
