@@ -14,7 +14,6 @@ type MoveSolver struct {
 	winner             Player
 	lastBoardPrintTime time.Time
 	progressBar        *progressbar.ProgressBar
-	maxCacheDepth      uint
 
 	iterations           uint64
 	cacheUsages          uint64
@@ -36,11 +35,10 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	})
 
 	return &MoveSolver{
-		cache:                NewEndingCache(),
+		cache:                NewEndingCache(maxCacheDepth, board.w),
 		lastBoardPrintTime:   time.Now(),
 		progressBar:          progressbar.Default(progressBarResolution),
 		cachedDepthHistogram: map[uint]uint64{},
-		maxCacheDepth:        maxCacheDepth,
 		movesOrder:           CalculateMovesOrder(board),
 	}
 }
@@ -93,7 +91,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	board.Throw(move, player)
 	defer board.Revert(move)
 
-	if depth <= s.maxCacheDepth {
+	if depth <= s.cache.maxCacheDepth {
 		ending, ok := s.cache.Get(board)
 		if ok {
 			s.cacheUsages++
@@ -128,10 +126,7 @@ func (s *MoveSolver) bestEndingOnMove(
 			if nextPlayer == PlayerA {
 				// player A chooses highest possible move
 				if moveEnding == Win { // short-circuit, cant be better
-					if depth <= s.maxCacheDepth {
-						s.cache.Put(board, Win)
-					}
-					return Win
+					return s.cache.Put(board, depth, Win)
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] > MoveResultsWeights[*bestEnding] {
 					bestEnding = &moveEnding
@@ -139,10 +134,7 @@ func (s *MoveSolver) bestEndingOnMove(
 			} else {
 				// player B chooses worst possible move
 				if moveEnding == Lose { // short-circuit, cant be worse
-					if depth <= s.maxCacheDepth {
-						s.cache.Put(board, Lose)
-					}
-					return Lose
+					return s.cache.Put(board, depth, Lose)
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] < MoveResultsWeights[*bestEnding] {
 					bestEnding = &moveEnding
@@ -152,16 +144,10 @@ func (s *MoveSolver) bestEndingOnMove(
 	}
 
 	if bestEnding == nil {
-		if depth <= s.maxCacheDepth {
-			s.cache.Put(board, Tie)
-		}
-		return Tie
+		return s.cache.Put(board, depth, Tie)
 	}
 
-	if depth <= s.maxCacheDepth {
-		s.cache.Put(board, *bestEnding)
-	}
-	return *bestEnding
+	return s.cache.Put(board, depth, *bestEnding)
 }
 
 func oppositePlayer(player Player) Player {

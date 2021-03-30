@@ -22,3 +22,27 @@ func TestEvaluateKey(t *testing.T) {
 	assert.EqualValues(t, byte(0b00000011), byte3)
 	assert.EqualValues(t, byte(0b00000110), byte4)
 }
+
+func TestMirrorKey(t *testing.T) {
+	boardL := ParseBoard(`
+A . . . .
+A . . B .
+A . B A A
+`)
+	boardR := ParseBoard(`
+. . . . A
+. B . . A
+A A B . A
+`)
+	cache := NewEndingCache(999, 5)
+
+	cache.Put(boardL, 7, Win)
+
+	end, ok := cache.Get(boardL)
+	assert.EqualValues(t, true, ok)
+	assert.EqualValues(t, Win, end)
+
+	end, ok = cache.Get(boardR)
+	assert.EqualValues(t, true, ok)
+	assert.EqualValues(t, Win, end)
+}
