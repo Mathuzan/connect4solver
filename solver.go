@@ -13,6 +13,9 @@ type MoveSolver struct {
 	winner             *Player
 	lastBoardPrintTime time.Time
 	progressBar        *progressbar.ProgressBar
+
+	iterations       uint64
+	cachedIterations uint64
 }
 
 const progressBarResolution = 1000000
@@ -58,15 +61,18 @@ func (s *MoveSolver) bestEndingOnMove(
 	progressStart float64,
 	progressEnd float64,
 ) GameEnding {
+	s.iterations++
+
 	board.Throw(move, player)
 	defer board.Revert(move)
 
 	boardKey := s.cache.EvaluateKey(board)
 	if s.cache.Has(boardKey) {
+		s.cachedIterations++
 		return s.cache.Get(boardKey)
 	}
 
-	if time.Since(s.lastBoardPrintTime) >= 2*time.Second {
+	if s.iterations%10000 == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
 	}
@@ -136,7 +142,9 @@ func (s *MoveSolver) ReportStatus(
 	progressEnd float64,
 ) {
 	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize": s.cache.Size(),
+		"cacheSize":        s.cache.Size(),
+		"iterations":       s.iterations,
+		"cachedIterations": s.cachedIterations,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
