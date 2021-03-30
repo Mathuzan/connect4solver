@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	log "github.com/inconshreveable/log15"
+	log "github.com/igrek51/log15"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -29,8 +29,8 @@ func NewMoveSolver(board *Board) *MoveSolver {
 
 	log.Debug("Parameters set", log.Ctx{
 		"maxCacheDepth": maxCacheDepth,
-		"width":         board.w,
-		"height":        board.h,
+		"boardWidth":    board.w,
+		"boardHeight":   board.h,
 		"winStreak":     board.winStreak,
 		"movesOrder":    CalculateMovesOrder(board),
 	})

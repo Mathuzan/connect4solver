@@ -6,7 +6,7 @@ import (
 	"runtime/pprof"
 	"time"
 
-	log "github.com/inconshreveable/log15"
+	log "github.com/igrek51/log15"
 )
 
 func main() {
@@ -31,5 +31,10 @@ func main() {
 	}
 
 	totalElapsed := time.Since(startTime)
-	log.Info("Done", log.Ctx{"totalTime": totalElapsed})
+	log.Info("Done", log.Ctx{
+		"totalTime":   totalElapsed,
+		"boardWidth":  width,
+		"boardHeight": height,
+		"winStreak":   winStreak,
+	})
 }
