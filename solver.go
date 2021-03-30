@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	log "github.com/inconshreveable/log15"
@@ -10,21 +11,34 @@ import (
 
 type MoveSolver struct {
 	cache              *EndingCache
-	winner             *Player
+	winner             Player
 	lastBoardPrintTime time.Time
 	progressBar        *progressbar.ProgressBar
+	maxCacheDepth      uint
 
-	iterations       uint64
-	cachedIterations uint64
+	iterations           uint64
+	cachedIterations     uint64
+	cachedDepthHistogram map[uint]uint64
 }
 
-const progressBarResolution = 1000000
+const progressBarResolution = 1000000000
 
-func NewMoveSolver() *MoveSolver {
+func NewMoveSolver(board *Board) *MoveSolver {
+	maxCacheDepth := uint(22)
+
+	log.Debug("Parameters set", log.Ctx{
+		"maxCacheDepth": maxCacheDepth,
+		"width":         board.w,
+		"height":        board.h,
+		"winStreak":     board.winStreak,
+	})
+
 	return &MoveSolver{
-		cache:              NewEndingCache(),
-		lastBoardPrintTime: time.Now(),
-		progressBar:        progressbar.Default(progressBarResolution),
+		cache:                NewEndingCache(),
+		lastBoardPrintTime:   time.Now(),
+		progressBar:          progressbar.Default(progressBarResolution),
+		cachedDepthHistogram: map[uint]uint64{},
+		maxCacheDepth:        maxCacheDepth,
 	}
 }
 
@@ -46,8 +60,17 @@ func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 	for move := 0; move < board.w; move++ {
 		progressStart := float64(move) / float64(board.w)
 		progressEnd := float64(move+1) / float64(board.w)
-		ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd)
+		ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
 		endings[move] = ending
+	}
+
+	keys := make([]uint, 0, len(s.cachedDepthHistogram))
+	for k := range s.cachedDepthHistogram {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
+	for _, k := range keys {
+		log.Debug(fmt.Sprintf("depth: %d, cached entries: %d", k, s.cachedDepthHistogram[k]))
 	}
 
 	return endings
@@ -60,16 +83,18 @@ func (s *MoveSolver) bestEndingOnMove(
 	move int,
 	progressStart float64,
 	progressEnd float64,
+	depth uint,
 ) GameEnding {
 	s.iterations++
 
 	board.Throw(move, player)
 	defer board.Revert(move)
 
-	boardKey := s.cache.EvaluateKey(board)
-	if s.cache.Has(boardKey) {
-		s.cachedIterations++
-		return s.cache.Get(boardKey)
+	if depth <= s.maxCacheDepth {
+		if s.cache.Has(board) {
+			s.cachedIterations++
+			return s.cache.Get(board)
+		}
 	}
 
 	if s.iterations%10000 == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
@@ -78,12 +103,10 @@ func (s *MoveSolver) bestEndingOnMove(
 	}
 
 	s.winner = board.HasWinner()
-	if s.winner != nil {
-		if *s.winner == PlayerA {
-			return Win
-		} else {
-			return Lose
-		}
+	if s.winner == PlayerA {
+		return Win
+	} else if s.winner == PlayerB {
+		return Lose
 	}
 
 	nextPlayer := oppositePlayer(player)
@@ -95,12 +118,15 @@ func (s *MoveSolver) bestEndingOnMove(
 			moveEnding := s.bestEndingOnMove(board, nextPlayer, move,
 				progressStart+float64(move)*(progressEnd-progressStart)/float64(board.w),
 				progressStart+float64(move+1)*(progressEnd-progressStart)/float64(board.w),
+				depth+1,
 			)
 
 			if nextPlayer == PlayerA {
 				// player A chooses highest possible move
 				if moveEnding == Win { // short-circuit, cant be better
-					s.cache.Put(boardKey, Win)
+					if depth <= s.maxCacheDepth {
+						s.cache.Put(board, Win)
+					}
 					return Win
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] > MoveResultsWeights[*bestEnding] {
@@ -109,7 +135,9 @@ func (s *MoveSolver) bestEndingOnMove(
 			} else {
 				// player B chooses worst possible move
 				if moveEnding == Lose { // short-circuit, cant be worse
-					s.cache.Put(boardKey, Lose)
+					if depth <= s.maxCacheDepth {
+						s.cache.Put(board, Lose)
+					}
 					return Lose
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] < MoveResultsWeights[*bestEnding] {
@@ -120,11 +148,15 @@ func (s *MoveSolver) bestEndingOnMove(
 	}
 
 	if bestEnding == nil {
-		s.cache.Put(boardKey, Tie)
+		if depth <= s.maxCacheDepth {
+			s.cache.Put(board, Tie)
+		}
 		return Tie
 	}
 
-	s.cache.Put(boardKey, *bestEnding)
+	if depth <= s.maxCacheDepth {
+		s.cache.Put(board, *bestEnding)
+	}
 	return *bestEnding
 }
 
@@ -157,5 +189,5 @@ func (s *MoveSolver) BestEndingOnMove(
 	player Player,
 	move int,
 ) GameEnding {
-	return s.bestEndingOnMove(board, player, move, 0, 1)
+	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
 }

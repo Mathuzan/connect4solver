@@ -1,72 +1,76 @@
 package main
 
-func CheckWinner(board *Board) *Player {
-	var winner *Player
+import "math/bits"
 
+var winner Player
+var lastToken uint8
+var lastTokenPlayer Player
+var currentToken Player
+var sameStreak int
+var stacksSum uint8
+
+func CheckWinner(board *Board) Player {
 	winner = checkVertical(board)
-	if winner != nil {
+	if winner != Empty {
 		return winner
 	}
 
 	winner = checkHorizontal(board)
-	if winner != nil {
+	if winner != Empty {
 		return winner
 	}
 
 	winner = checkDiagonals(board)
-	if winner != nil {
+	if winner != Empty {
 		return winner
 	}
 
-	return nil
+	return Empty
 }
 
-func checkVertical(board *Board) *Player {
-	for i, column := range board.Columns {
-		winner := checkContinuousSequence(board, column, board.ColumnSizes[i])
-		if winner != nil {
+func checkVertical(board *Board) Player {
+	for x := 0; x < board.w; x++ {
+		winner = checkColumnSequence(board, board.state[x], board.stackSize(x))
+		if winner != Empty {
 			return winner
 		}
 	}
-	return nil
+	return Empty
 }
 
-func checkHorizontal(board *Board) *Player {
-	maxHeight := 0
-	for _, colsize := range board.ColumnSizes {
-		if colsize > maxHeight {
-			maxHeight = colsize
-		}
+func checkHorizontal(board *Board) Player {
+	// overlay all columns and determine max stack size
+	stacksSum = 0
+	for x := 0; x < board.w; x++ {
+		stacksSum |= board.state[x]
 	}
 
-	for y := 0; y < maxHeight; y++ {
-		var last *Player = nil
-		var e *Player = nil
-		streak := 0
-		for x := 0; x < board.w; x++ {
-			e = board.GetCell(x, y)
-			if last == nil || e == nil || *e != *last {
-				streak = 0
-				last = e
+	for y := 0; y < 7-bits.LeadingZeros8(stacksSum); y++ {
+		lastTokenPlayer = board.GetCell(0, y)
+		sameStreak = 1
+
+		for x := 1; x < board.w; x++ {
+			currentToken = board.GetCell(x, y)
+			if lastTokenPlayer == Empty || currentToken == Empty || currentToken != lastTokenPlayer {
+				sameStreak = 0
+				lastTokenPlayer = currentToken
 			}
-			if e != nil {
-				streak += 1
+			if currentToken != Empty {
+				sameStreak += 1
 			}
-			if streak >= board.winStreak {
-				return e
+			if sameStreak >= board.winStreak {
+				return currentToken
 			}
 		}
 	}
-	return nil
+	return Empty
 }
 
-func checkDiagonals(board *Board) *Player {
-	var winner *Player
-
+func checkDiagonals(board *Board) Player {
 	// on bottom edge, to right-top
 	for xstart := 0; xstart < board.w-board.winStreak+1; xstart++ {
 		winner = checkDiagonal(board, xstart, 0, +1)
-		if winner != nil {
+		if winner != Empty {
 			return winner
 		}
 	}
@@ -74,7 +78,7 @@ func checkDiagonals(board *Board) *Player {
 	// on bottom edge, to left-top
 	for xstart := board.winStreak - 1; xstart < board.w; xstart++ {
 		winner = checkDiagonal(board, xstart, 0, -1)
-		if winner != nil {
+		if winner != Empty {
 			return winner
 		}
 	}
@@ -82,87 +86,64 @@ func checkDiagonals(board *Board) *Player {
 	for ystart := 1; ystart < board.h-board.winStreak+1; ystart++ {
 		// on left edge, to right-top
 		winner = checkDiagonal(board, 0, ystart, +1)
-		if winner != nil {
+		if winner != Empty {
 			return winner
 		}
 
 		// on right edge, to left-top
 		winner = checkDiagonal(board, board.w-1, ystart, -1)
-		if winner != nil {
+		if winner != Empty {
 			return winner
 		}
 	}
 
-	return nil
+	return Empty
 }
 
-func checkDiagonal(board *Board, xstart, ystart, xstep int) *Player {
-	var last *Player = nil
-	var e *Player = nil
-	streak := 0
-	x := xstart
-	y := ystart
+func checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
+	lastTokenPlayer = board.GetCell(xstart, ystart)
+	sameStreak = 1
+	x := xstart + xstep
+	y := ystart + 1
 	for {
-		e = board.GetCell(x, y)
-		if last == nil || e == nil || *e != *last {
-			streak = 0
-			last = e
+		currentToken = board.GetCell(x, y)
+		if lastTokenPlayer == Empty || currentToken == Empty || currentToken != lastTokenPlayer {
+			sameStreak = 0
+			lastTokenPlayer = currentToken
 		}
-		if e != nil {
-			streak += 1
+		if currentToken != Empty {
+			sameStreak += 1
 		}
-		if streak >= board.winStreak {
-			return e
+		if sameStreak >= board.winStreak {
+			return currentToken
 		}
 
 		x += xstep
-		y += 1
+		y++
 		if x >= board.w || x < 0 || y >= board.h {
-			return nil
+			return Empty
 		}
 	}
 }
 
-// checkSequence checks if there's a winning streak
-func CheckSequence(winStreak int, seq []*Player) *Player {
-	if len(seq) < winStreak {
-		return nil
+// checkColumnSequence checks if there's a winning streak
+func checkColumnSequence(board *Board, columnState uint8, stackSize int) Player {
+	if stackSize < board.winStreak {
+		return Empty
 	}
 
-	var last *Player = nil
-	streak := 0
-	for _, e := range seq {
-		if last == nil || e == nil || *e != *last {
-			streak = 0
-			last = e
-		}
-		if e != nil {
-			streak += 1
-		}
-		if streak >= winStreak {
-			return e
-		}
-	}
-	return nil
-}
-
-func checkContinuousSequence(board *Board, seq []*Player, colsize int) *Player {
-	if colsize < board.winStreak {
-		return nil
-	}
-
-	last := *seq[0]
-	streak := 1
-	for i := 1; i < colsize; i++ {
-		if *seq[i] != last {
-			streak = 1
-			last = *seq[i]
+	lastToken = columnState & 0b1
+	sameStreak = 1
+	for y := 1; y < stackSize; y++ {
+		if (columnState>>y)&0b1 != lastToken {
+			sameStreak = 1
+			lastToken = (columnState >> y) & 0b1
 			continue
 		}
-		streak += 1
-		if streak >= board.winStreak {
-			return seq[i]
+		sameStreak += 1
+		if sameStreak >= board.winStreak {
+			return Player(lastToken)
 		}
 	}
-	return nil
+	return Empty
 }

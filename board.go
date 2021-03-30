@@ -2,18 +2,23 @@ package main
 
 import (
 	"fmt"
+	"math/bits"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
+// Board keeps state in a binary format:
+// - first binary One signifies stack height
+// - next bits signifies Player A (zero) or Player B (one)
 type Board struct {
-	w           int
-	h           int
-	winStreak   int
-	Columns     [][]*Player
-	ColumnSizes []int
+	w         int
+	h         int
+	winStreak int
+	state     BoardKey
 }
+
+type BoardKey [7]uint8
 
 func NewBoard(options ...Option) *Board {
 	// set defaults
@@ -32,13 +37,10 @@ func NewBoard(options ...Option) *Board {
 	}
 
 	// validate & post-process
-	b.Columns = make([][]*Player, b.w)
-	b.ColumnSizes = make([]int, b.w)
+	b.state = [7]uint8{}
 	for x := 0; x < b.w; x++ {
-		b.Columns[x] = make([]*Player, b.h)
-		b.ColumnSizes[x] = 0
+		b.state[x] = 0b1
 	}
-
 	return b
 }
 
@@ -59,29 +61,35 @@ func WithWinStreak(winStreak int) Option {
 	}
 }
 
+var colSize int
+
 // GetCell return token at given cell coordinates (axes oriented top-right)
-func (b *Board) GetCell(x int, y int) *Player {
-	column := b.Columns[x]
-	if y >= b.ColumnSizes[x] {
-		return nil
+func (b *Board) GetCell(x int, y int) Player {
+	if b.state[x]>>(y+1) == 0 {
+		return Empty
 	}
-	return column[y]
+	return Player((b.state[x] >> y) & 0b1)
 }
 
-func (b *Board) Throw(x int, player Player) *Board {
-	if b.ColumnSizes[x] >= b.h {
+func (b *Board) Throw(x int, player Player) {
+	colSize = 7 - bits.LeadingZeros8(b.state[x])
+	if colSize >= b.h {
 		panic("column is already full")
 	}
-	b.Columns[x][b.ColumnSizes[x]] = &player
-	b.ColumnSizes[x]++
-	return b
+	// reset column signifying stack size
+	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize + 1)) | (uint8(player) << colSize)
 }
 
 func (b *Board) Revert(x int) {
-	if b.ColumnSizes[x] <= 0 {
+	if b.state[x] == 0b1 {
 		panic("cant pull out from empty column")
 	}
-	b.ColumnSizes[x]--
+	colSize = 7 - bits.LeadingZeros8(b.state[x])
+	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize - 1))
+}
+
+func (b *Board) stackSize(x int) int {
+	return 7 - bits.LeadingZeros8(b.state[x])
 }
 
 const (
@@ -104,14 +112,12 @@ func (b *Board) String() string {
 		rowCells := []string{}
 		for x := 0; x < b.w; x++ {
 			cell := b.GetCell(x, y)
-			if cell == nil {
-				rowCells = append(rowCells, string(CellEmpty))
+			if cell == PlayerA {
+				rowCells = append(rowCells, ColouredPlayerA)
+			} else if cell == PlayerB {
+				rowCells = append(rowCells, ColouredPlayerB)
 			} else {
-				if *cell == PlayerA {
-					rowCells = append(rowCells, ColouredPlayerA)
-				} else if *cell == PlayerB {
-					rowCells = append(rowCells, ColouredPlayerB)
-				}
+				rowCells = append(rowCells, EmptyCell)
 			}
 		}
 		line = "| " + strings.Join(rowCells, " ") + " |"
@@ -135,19 +141,19 @@ func (b *Board) String() string {
 	return strings.Join(lines, "\n")
 }
 
-func (b *Board) HasWinner() *Player {
+func (b *Board) HasWinner() Player {
 	return CheckWinner(b)
 }
 
 func (b *Board) NextPlayer() Player {
 	tokensA := 0
 	tokensB := 0
-	for x, column := range b.Columns {
-		for y := 0; y < b.ColumnSizes[x]; y++ {
-			cell := column[y]
-			if *cell == PlayerA {
+	for x := 0; x < b.w; x++ {
+		for y := 0; y < b.stackSize(x); y++ {
+			cell := b.GetCell(x, y)
+			if cell == PlayerA {
 				tokensA++
-			} else if *cell == PlayerB {
+			} else if cell == PlayerB {
 				tokensB++
 			}
 		}
@@ -160,24 +166,20 @@ func (b *Board) NextPlayer() Player {
 }
 
 func (b *Board) CanMakeMove(x int) bool {
-	return b.ColumnSizes[x] < b.h
+	return b.state[x]>>b.h == 0
 }
 
 func (b *Board) Clone() *Board {
-	columns := make([][]*Player, b.w)
-	columnSizes := make([]int, b.w)
+	state := [7]byte{}
 	for x := 0; x < b.w; x++ {
-		columnSizes[x] = b.ColumnSizes[x]
-		columns[x] = make([]*Player, b.h)
-		copy(columns[x], b.Columns[x])
+		state[x] = b.state[x]
 	}
 
 	return &Board{
-		w:           b.w,
-		h:           b.h,
-		winStreak:   b.winStreak,
-		Columns:     columns,
-		ColumnSizes: columnSizes,
+		w:         b.w,
+		h:         b.h,
+		winStreak: b.winStreak,
+		state:     state,
 	}
 }
 
@@ -196,9 +198,9 @@ func ParseBoard(txt string, options ...Option) *Board {
 	board := NewBoard(newOptions...)
 	for _, line := range lines {
 		for x, cell := range line {
-			if cell == rune(PlayerA) {
+			if cell == PlayerARune {
 				board.Throw(x, PlayerA)
-			} else if cell == rune(PlayerB) {
+			} else if cell == PlayerBRune {
 				board.Throw(x, PlayerB)
 			}
 		}

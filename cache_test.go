@@ -12,8 +12,7 @@ func TestEvaluateKey(t *testing.T) {
 . . . B
 . A B A
 `)
-	store := NewEndingCache()
-	key := store.EvaluateKey(board)
+	key := board.state
 	byte1 := [7]byte(key)[0]
 	byte2 := [7]byte(key)[1]
 	byte3 := [7]byte(key)[2]
