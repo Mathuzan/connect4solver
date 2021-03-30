@@ -10,13 +10,9 @@ func NewEndingCache() *EndingCache {
 	}
 }
 
-func (s *EndingCache) Has(board *Board) bool {
-	_, ok := s.cache[board.state]
-	return ok
-}
-
-func (s *EndingCache) Get(board *Board) GameEnding {
-	return s.cache[board.state]
+func (s *EndingCache) Get(board *Board) (GameEnding, bool) {
+	ending, ok := s.cache[board.state]
+	return ending, ok
 }
 
 func (s *EndingCache) Put(board *Board, ending GameEnding) {

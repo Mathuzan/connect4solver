@@ -91,9 +91,10 @@ func (s *MoveSolver) bestEndingOnMove(
 	defer board.Revert(move)
 
 	if depth <= s.maxCacheDepth {
-		if s.cache.Has(board) {
+		ending, ok := s.cache.Get(board)
+		if ok {
 			s.cachedIterations++
-			return s.cache.Get(board)
+			return ending
 		}
 	}
 
