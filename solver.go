@@ -5,15 +5,23 @@ import (
 	"time"
 
 	log "github.com/inconshreveable/log15"
+	"github.com/schollz/progressbar/v3"
 )
 
 type MoveSolver struct {
-	cache *EndingCache
+	cache              *EndingCache
+	winner             *Player
+	lastBoardPrintTime time.Time
+	progressBar        *progressbar.ProgressBar
 }
+
+const progressBarResolution = 1000000
 
 func NewMoveSolver() *MoveSolver {
 	return &MoveSolver{
-		cache: NewEndingCache(),
+		cache:              NewEndingCache(),
+		lastBoardPrintTime: time.Now(),
+		progressBar:        progressbar.Default(progressBarResolution),
 	}
 }
 
@@ -31,19 +39,25 @@ func (s *MoveSolver) BestEnding(board *Board) GameEnding {
 func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 	endings := make([]GameEnding, board.w)
 	player := board.NextPlayer()
+
 	for move := 0; move < board.w; move++ {
-		ending := s.BestEndingOnMove(board.Clone(), player, move)
+		progressStart := float64(move) / float64(board.w)
+		progressEnd := float64(move+1) / float64(board.w)
+		ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd)
 		endings[move] = ending
 	}
 
 	return endings
 }
 
-var winner *Player
-var lastBoardPrintTime time.Time
-
-// BestEndingOnMove finds best ending on given next move
-func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) GameEnding {
+// bestEndingOnMove finds best ending on given next move
+func (s *MoveSolver) bestEndingOnMove(
+	board *Board,
+	player Player,
+	move int,
+	progressStart float64,
+	progressEnd float64,
+) GameEnding {
 	board.Throw(move, player)
 	defer board.Revert(move)
 
@@ -52,35 +66,35 @@ func (s *MoveSolver) BestEndingOnMove(board *Board, player Player, move int) Gam
 		return s.cache.Get(boardKey)
 	}
 
-	if time.Since(lastBoardPrintTime) >= 2*time.Second {
-		lastBoardPrintTime = time.Now()
-		ReportStatus(board, s.cache)
+	if time.Since(s.lastBoardPrintTime) >= 2*time.Second {
+		s.lastBoardPrintTime = time.Now()
+		s.ReportStatus(board, progressStart, progressEnd)
 	}
 
-	winner = board.HasWinner()
-	if winner != nil {
-		if *winner == PlayerA {
+	s.winner = board.HasWinner()
+	if s.winner != nil {
+		if *s.winner == PlayerA {
 			return Win
 		} else {
 			return Lose
 		}
 	}
 
-	ending := s.NextMoveEnding(board, oppositePlayer(player))
-	s.cache.Put(boardKey, ending)
-	return ending
-}
+	nextPlayer := oppositePlayer(player)
 
-// NextMoveEnding finds further possible moves
-func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
+	// find further possible moves
 	var bestEnding *GameEnding = nil
 	for move := 0; move < board.w; move++ {
 		if board.CanMakeMove(move) {
-			moveEnding := s.BestEndingOnMove(board, player, move)
+			moveEnding := s.bestEndingOnMove(board, nextPlayer, move,
+				progressStart+float64(move)*(progressEnd-progressStart)/float64(board.w),
+				progressStart+float64(move+1)*(progressEnd-progressStart)/float64(board.w),
+			)
 
-			if player == PlayerA {
+			if nextPlayer == PlayerA {
 				// player A chooses highest possible move
 				if moveEnding == Win { // short-circuit, cant be better
+					s.cache.Put(boardKey, Win)
 					return Win
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] > MoveResultsWeights[*bestEnding] {
@@ -89,6 +103,7 @@ func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
 			} else {
 				// player B chooses worst possible move
 				if moveEnding == Lose { // short-circuit, cant be worse
+					s.cache.Put(boardKey, Lose)
 					return Lose
 				}
 				if bestEnding == nil || MoveResultsWeights[moveEnding] < MoveResultsWeights[*bestEnding] {
@@ -99,9 +114,11 @@ func (s *MoveSolver) NextMoveEnding(board *Board, player Player) GameEnding {
 	}
 
 	if bestEnding == nil {
+		s.cache.Put(boardKey, Tie)
 		return Tie
 	}
 
+	s.cache.Put(boardKey, *bestEnding)
 	return *bestEnding
 }
 
@@ -113,29 +130,24 @@ func oppositePlayer(player Player) Player {
 	}
 }
 
-func maxPossibleMove(endings []GameEnding) GameEnding {
-	maxr := endings[0]
-	for _, ending := range endings {
-		if MoveResultsWeights[ending] > MoveResultsWeights[maxr] {
-			maxr = ending
-		}
-	}
-	return maxr
-}
-
-func minPossibleMove(endings []GameEnding) GameEnding {
-	minr := endings[0]
-	for _, ending := range endings {
-		if MoveResultsWeights[ending] < MoveResultsWeights[minr] {
-			minr = ending
-		}
-	}
-	return minr
-}
-
-func ReportStatus(board *Board, cache *EndingCache) {
+func (s *MoveSolver) ReportStatus(
+	board *Board,
+	progressStart float64,
+	progressEnd float64,
+) {
 	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize": cache.Size(),
+		"cacheSize": s.cache.Size(),
 	})
 	fmt.Println(board.String())
+	if s.progressBar != nil {
+		s.progressBar.Set(int(progressStart * progressBarResolution))
+	}
+}
+
+func (s *MoveSolver) BestEndingOnMove(
+	board *Board,
+	player Player,
+	move int,
+) GameEnding {
+	return s.bestEndingOnMove(board, player, move, 0, 1)
 }
