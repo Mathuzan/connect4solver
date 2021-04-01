@@ -1,120 +1,194 @@
 package main
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
-var winner Player
-var lastToken Player
-var currentToken Player
-var sameStreak int
-var stacksSum uint8
+type Referee struct {
+	w         int
+	h         int
+	winStreak int
 
-func CheckWinner(board *Board) Player {
-	winner = checkVertical(board)
-	if winner != Empty {
-		return winner
+	verticalMovesMap map[uint8]Player
+	binaryRowMap     map[uint8]bool
+
+	winner       Player
+	lastToken    Player
+	currentToken Player
+	sameStreak   int
+	stacksSum    uint8
+}
+
+func NewReferee(board *Board) *Referee {
+	s := &Referee{
+		w:         board.w,
+		h:         board.h,
+		winStreak: board.winStreak,
 	}
 
-	winner = checkHorizontal(board)
-	if winner != Empty {
-		return winner
+	// get all possible column layouts and pre-calculate winners for them
+	verticalMovesMap := make(map[uint8]Player)
+	for colState := uint8(0); colState <= (1<<(s.h+1))-1; colState++ {
+		verticalMovesMap[colState] = s.whoWonColumn(colState)
+	}
+	s.verticalMovesMap = verticalMovesMap
+
+	maxSize := s.w
+	if s.h > maxSize {
+		maxSize = s.h
+	}
+	// binary row is represented as: 1 - desired token of player, 0 - opponent's token or empty
+	binaryRowMap := make(map[uint8]bool)
+	for binaryRow := uint8(0); binaryRow <= (1<<maxSize)-1; binaryRow++ {
+		binaryRowMap[binaryRow] = s.hasWonRow(binaryRow)
+	}
+	s.binaryRowMap = binaryRowMap
+
+	return s
+}
+
+func (s *Referee) HasPlayerWon(board *Board, move int, y int, player Player) bool {
+	return s.HasPlayerWonVertical(board, move, player) ||
+		s.HasPlayerWonHorizontal(board, y, player) ||
+		s.HasPlayerWonDiagonal(board, move, y, player, 1) ||
+		s.HasPlayerWonDiagonal(board, move, y, player, -1)
+}
+
+func (s *Referee) HasPlayerWonVertical(board *Board, move int, player Player) bool {
+	return s.verticalMovesMap[board.state[move]] == player
+}
+
+func (s *Referee) HasPlayerWonHorizontal(board *Board, y int, player Player) bool {
+	var binaryRow uint8
+	for x := 0; x < s.w; x++ {
+		if board.GetCell(x, y) == player {
+			binaryRow |= 1 << x
+		}
+	}
+	return s.binaryRowMap[binaryRow]
+}
+
+func (s *Referee) HasPlayerWonDiagonal(board *Board, startX int, startY int, player Player, stepY int) bool {
+	var binaryRow uint8
+	y := startY - (s.winStreak-1)*stepY
+	for x := startX - (s.winStreak - 1); x <= startX+(s.winStreak-1); x++ {
+		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
+			if board.GetCell(x, y) == player {
+				binaryRow |= 1 << x
+			}
+		}
+		y += stepY
+	}
+	return s.binaryRowMap[binaryRow]
+}
+
+func (s *Referee) HasWinner(board *Board) Player {
+	s.winner = s.checkVertical(board)
+	if s.winner != Empty {
+		return s.winner
 	}
 
-	winner = checkDiagonals(board)
-	if winner != Empty {
-		return winner
+	s.winner = s.checkHorizontal(board)
+	if s.winner != Empty {
+		return s.winner
+	}
+
+	s.winner = s.checkDiagonals(board)
+	if s.winner != Empty {
+		return s.winner
 	}
 
 	return Empty
 }
 
-func checkVertical(board *Board) Player {
+func (s *Referee) checkVertical(board *Board) Player {
 	for x := 0; x < board.w; x++ {
-		winner = checkColumnSequence(board, board.state[x], board.stackSize(x))
-		if winner != Empty {
-			return winner
+		s.winner = s.checkColumnSequence(board, board.state[x], board.stackSize(x))
+		if s.winner != Empty {
+			return s.winner
 		}
 	}
 	return Empty
 }
 
-func checkHorizontal(board *Board) Player {
+func (s *Referee) checkHorizontal(board *Board) Player {
 	// overlay all columns and determine max stack size
-	stacksSum = 0
+	s.stacksSum = 0
 	for x := 0; x < board.w; x++ {
-		stacksSum |= board.state[x]
+		s.stacksSum |= board.state[x]
 	}
 
-	for y := 0; y < 7-bits.LeadingZeros8(stacksSum); y++ {
-		lastToken = board.GetCell(0, y)
-		sameStreak = 1
+	for y := 0; y < 7-bits.LeadingZeros8(s.stacksSum); y++ {
+		s.lastToken = board.GetCell(0, y)
+		s.sameStreak = 1
 
 		for x := 1; x < board.w; x++ {
-			currentToken = board.GetCell(x, y)
-			if lastToken == Empty || currentToken == Empty || currentToken != lastToken {
-				sameStreak = 0
-				lastToken = currentToken
+			s.currentToken = board.GetCell(x, y)
+			if s.lastToken == Empty || s.currentToken == Empty || s.currentToken != s.lastToken {
+				s.sameStreak = 0
+				s.lastToken = s.currentToken
 			}
-			if currentToken != Empty {
-				sameStreak += 1
+			if s.currentToken != Empty {
+				s.sameStreak += 1
 			}
-			if sameStreak >= board.winStreak {
-				return currentToken
+			if s.sameStreak >= board.winStreak {
+				return s.currentToken
 			}
 		}
 	}
 	return Empty
 }
 
-func checkDiagonals(board *Board) Player {
+func (s *Referee) checkDiagonals(board *Board) Player {
 	// on bottom edge, to right-top
 	for xstart := 0; xstart < board.w-board.winStreak+1; xstart++ {
-		winner = checkDiagonal(board, xstart, 0, +1)
-		if winner != Empty {
-			return winner
+		s.winner = s.checkDiagonal(board, xstart, 0, +1)
+		if s.winner != Empty {
+			return s.winner
 		}
 	}
 
 	// on bottom edge, to left-top
 	for xstart := board.winStreak - 1; xstart < board.w; xstart++ {
-		winner = checkDiagonal(board, xstart, 0, -1)
-		if winner != Empty {
-			return winner
+		s.winner = s.checkDiagonal(board, xstart, 0, -1)
+		if s.winner != Empty {
+			return s.winner
 		}
 	}
 
 	for ystart := 1; ystart < board.h-board.winStreak+1; ystart++ {
 		// on left edge, to right-top
-		winner = checkDiagonal(board, 0, ystart, +1)
-		if winner != Empty {
-			return winner
+		s.winner = s.checkDiagonal(board, 0, ystart, +1)
+		if s.winner != Empty {
+			return s.winner
 		}
 
 		// on right edge, to left-top
-		winner = checkDiagonal(board, board.w-1, ystart, -1)
-		if winner != Empty {
-			return winner
+		s.winner = s.checkDiagonal(board, board.w-1, ystart, -1)
+		if s.winner != Empty {
+			return s.winner
 		}
 	}
 
 	return Empty
 }
 
-func checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
-	lastToken = board.GetCell(xstart, ystart)
-	sameStreak = 1
+func (s *Referee) checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
+	s.lastToken = board.GetCell(xstart, ystart)
+	s.sameStreak = 1
 	x := xstart + xstep
 	y := ystart + 1
 	for {
-		currentToken = board.GetCell(x, y)
-		if lastToken == Empty || currentToken == Empty || currentToken != lastToken {
-			sameStreak = 0
-			lastToken = currentToken
+		s.currentToken = board.GetCell(x, y)
+		if s.lastToken == Empty || s.currentToken == Empty || s.currentToken != s.lastToken {
+			s.sameStreak = 0
+			s.lastToken = s.currentToken
 		}
-		if currentToken != Empty {
-			sameStreak += 1
+		if s.currentToken != Empty {
+			s.sameStreak += 1
 		}
-		if sameStreak >= board.winStreak {
-			return currentToken
+		if s.sameStreak >= board.winStreak {
+			return s.currentToken
 		}
 
 		x += xstep
@@ -139,7 +213,7 @@ func checkDiagonal(board *Board, xstart, ystart, xstep int) Player {
 // Clear first bits, get last (stack size - (winStreak-1)): & ((1 << (stacksize - (winStreak-1))) -1):
 //								  &: 000oooo01111111111
 // Is different than 0?
-func checkColumnSequence(board *Board, columnState uint8, stackSize int) Player {
+func (s *Referee) checkColumnSequence(board *Board, columnState uint8, stackSize int) Player {
 	if stackSize < board.winStreak {
 		return Empty
 	}
@@ -161,4 +235,41 @@ func checkColumnSequence(board *Board, columnState uint8, stackSize int) Player 
 		return PlayerB
 	}
 	return Empty
+}
+
+func getStackSize(columnState uint8) int {
+	return 7 - bits.LeadingZeros8(columnState)
+}
+
+func (s *Referee) whoWonColumn(columnState uint8) Player {
+	stackSize := getStackSize(columnState)
+	if stackSize < s.winStreak {
+		return Empty
+	}
+
+	onesB := columnState
+	onesA := ^columnState
+
+	for i := 0; i < s.winStreak-1; i++ {
+		onesB &= onesB >> 1
+		onesA &= onesA >> 1
+	}
+
+	var mask uint8 = (1 << (stackSize - (s.winStreak - 1))) - 1
+
+	if onesA&mask != 0 {
+		return PlayerA
+	}
+	if onesB&mask != 0 {
+		return PlayerB
+	}
+	return Empty
+}
+
+func (s *Referee) hasWonRow(row uint8) bool {
+	ones := row
+	for i := 0; i < s.winStreak-1; i++ {
+		ones &= ones >> 1
+	}
+	return ones != 0
 }

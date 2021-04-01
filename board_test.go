@@ -116,11 +116,11 @@ func TestRevert(t *testing.T) {
 .B....A
 .A.A..B
 `)
-	board.Revert(1)
-	board.Revert(3)
-	board.Revert(6)
-	board.Revert(6)
-	board.Revert(6)
+	board.Revert(1, 1)
+	board.Revert(3, 0)
+	board.Revert(6, 3)
+	board.Revert(6, 2)
+	board.Revert(6, 1)
 	rendered := board.String()
 	AssertEqualTrimmed(t, rendered, `
 +---------------+

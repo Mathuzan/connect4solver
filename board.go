@@ -16,6 +16,8 @@ type Board struct {
 	h         int
 	winStreak int
 	state     BoardKey
+
+	referee *Referee
 }
 
 type BoardKey [7]uint8
@@ -41,6 +43,7 @@ func NewBoard(options ...Option) *Board {
 	for x := 0; x < b.w; x++ {
 		b.state[x] = 0b1
 	}
+	b.referee = NewReferee(b)
 	return b
 }
 
@@ -69,21 +72,16 @@ func (b *Board) GetCell(x int, y int) Player {
 	return Player((b.state[x] >> y) & 0b1)
 }
 
-func (b *Board) Throw(x int, player Player) {
+func (b *Board) Throw(x int, player Player) int {
 	colSize := b.stackSize(x)
-	if colSize >= b.h {
-		panic("column is already full")
-	}
 	// reset column signifying stack size
 	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize + 1)) | (uint8(player) << colSize)
+	return colSize
 }
 
-func (b *Board) Revert(x int) {
-	if b.state[x] == 0b1 {
-		panic("cant pull out from empty column")
-	}
-	colSize := b.stackSize(x)
-	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize - 1))
+func (b *Board) Revert(x int, y int) {
+	// colsize = y + 1
+	b.state[x] = (b.state[x] & ^(1 << (y + 1))) | (1 << y)
 }
 
 func (b *Board) stackSize(x int) int {
@@ -140,7 +138,7 @@ func (b *Board) String() string {
 }
 
 func (b *Board) HasWinner() Player {
-	return CheckWinner(b)
+	return b.referee.HasWinner(b)
 }
 
 func (b *Board) NextPlayer() Player {
@@ -178,6 +176,7 @@ func (b *Board) Clone() *Board {
 		h:         b.h,
 		winStreak: b.winStreak,
 		state:     state,
+		referee:   b.referee,
 	}
 }
 

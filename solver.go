@@ -11,7 +11,6 @@ import (
 
 type MoveSolver struct {
 	cache              *EndingCache
-	winner             Player
 	lastBoardPrintTime time.Time
 	progressBar        *progressbar.ProgressBar
 
@@ -88,8 +87,8 @@ func (s *MoveSolver) bestEndingOnMove(
 ) GameEnding {
 	s.iterations++
 
-	board.Throw(move, player)
-	defer board.Revert(move)
+	y := board.Throw(move, player)
+	defer board.Revert(move, y)
 
 	if depth <= s.cache.maxCacheDepth {
 		ending, ok := s.cache.Get(board, depth)
@@ -104,11 +103,12 @@ func (s *MoveSolver) bestEndingOnMove(
 		s.ReportStatus(board, depth, progressStart, progressEnd)
 	}
 
-	s.winner = board.HasWinner()
-	if s.winner == PlayerA {
-		return Win
-	} else if s.winner == PlayerB {
-		return Lose
+	if board.referee.HasPlayerWon(board, move, y, player) {
+		if player == PlayerA {
+			return Win
+		} else if player == PlayerB {
+			return Lose
+		}
 	}
 
 	nextPlayer := oppositePlayer(player)
