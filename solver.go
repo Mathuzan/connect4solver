@@ -23,7 +23,7 @@ type MoveSolver struct {
 const progressBarResolution = 1000000000
 
 func NewMoveSolver(board *Board) *MoveSolver {
-	maxCacheDepth := uint(27)
+	maxCacheDepth := uint(26)
 
 	log.Debug("Parameters set", log.Ctx{
 		"maxCacheDepth": maxCacheDepth,
@@ -169,7 +169,6 @@ func (s *MoveSolver) ReportStatus(
 		"iterations":    s.iterations,
 		"cacheUsages":   s.cacheUsages,
 		"progressStart": progressStart,
-		"progressEnd":   progressEnd,
 		"depth":         depth,
 	})
 	fmt.Println(board.String())

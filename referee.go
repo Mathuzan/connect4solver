@@ -11,6 +11,7 @@ type Referee struct {
 
 	verticalMovesMap map[uint8]Player
 	binaryRowMap     map[uint8]bool
+	winStreak1       int
 
 	winner       Player
 	lastToken    Player
@@ -21,9 +22,10 @@ type Referee struct {
 
 func NewReferee(board *Board) *Referee {
 	s := &Referee{
-		w:         board.w,
-		h:         board.h,
-		winStreak: board.winStreak,
+		w:          board.w,
+		h:          board.h,
+		winStreak:  board.winStreak,
+		winStreak1: board.winStreak - 1,
 	}
 
 	// get all possible column layouts and pre-calculate winners for them
@@ -50,8 +52,8 @@ func NewReferee(board *Board) *Referee {
 func (s *Referee) HasPlayerWon(board *Board, move int, y int, player Player) bool {
 	return s.HasPlayerWonVertical(board, move, player) ||
 		s.HasPlayerWonHorizontal(board, y, player) ||
-		s.HasPlayerWonDiagonal(board, move, y, player, 1) ||
-		s.HasPlayerWonDiagonal(board, move, y, player, -1)
+		s.HasPlayerWonDiagonal(board, move, y, player) ||
+		s.HasPlayerWonDiagonalCounter(board, move, y, player)
 }
 
 func (s *Referee) HasPlayerWonVertical(board *Board, move int, player Player) bool {
@@ -68,16 +70,30 @@ func (s *Referee) HasPlayerWonHorizontal(board *Board, y int, player Player) boo
 	return s.binaryRowMap[binaryRow]
 }
 
-func (s *Referee) HasPlayerWonDiagonal(board *Board, startX int, startY int, player Player, stepY int) bool {
+func (s *Referee) HasPlayerWonDiagonal(board *Board, startX int, startY int, player Player) bool {
 	var binaryRow uint8
-	y := startY - (s.winStreak-1)*stepY
-	for x := startX - (s.winStreak - 1); x <= startX+(s.winStreak-1); x++ {
+	y := startY - s.winStreak1
+	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
 		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
 			if board.GetCell(x, y) == player {
 				binaryRow |= 1 << x
 			}
 		}
-		y += stepY
+		y++
+	}
+	return s.binaryRowMap[binaryRow]
+}
+
+func (s *Referee) HasPlayerWonDiagonalCounter(board *Board, startX int, startY int, player Player) bool {
+	var binaryRow uint8
+	y := startY + s.winStreak1
+	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
+		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
+			if board.GetCell(x, y) == player {
+				binaryRow |= 1 << x
+			}
+		}
+		y--
 	}
 	return s.binaryRowMap[binaryRow]
 }
@@ -250,12 +266,12 @@ func (s *Referee) whoWonColumn(columnState uint8) Player {
 	onesB := columnState
 	onesA := ^columnState
 
-	for i := 0; i < s.winStreak-1; i++ {
+	for i := 0; i < s.winStreak1; i++ {
 		onesB &= onesB >> 1
 		onesA &= onesA >> 1
 	}
 
-	var mask uint8 = (1 << (stackSize - (s.winStreak - 1))) - 1
+	var mask uint8 = (1 << (stackSize - s.winStreak1)) - 1
 
 	if onesA&mask != 0 {
 		return PlayerA
@@ -268,7 +284,7 @@ func (s *Referee) whoWonColumn(columnState uint8) Player {
 
 func (s *Referee) hasWonRow(row uint8) bool {
 	ones := row
-	for i := 0; i < s.winStreak-1; i++ {
+	for i := 0; i < s.winStreak1; i++ {
 		ones &= ones >> 1
 	}
 	return ones != 0

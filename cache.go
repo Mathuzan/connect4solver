@@ -1,7 +1,7 @@
 package main
 
 type EndingCache struct {
-	depthCaches   map[uint]map[BoardKey]GameEnding
+	depthCaches   []map[BoardKey]GameEnding
 	maxCacheDepth uint
 	cachedEntries uint64
 
@@ -11,7 +11,7 @@ type EndingCache struct {
 }
 
 func NewEndingCache(maxCacheDepth uint, boardW int, boardH int) *EndingCache {
-	depthCaches := make(map[uint]map[BoardKey]GameEnding)
+	depthCaches := make([]map[BoardKey]GameEnding, boardW*boardH)
 	for i := uint(0); i < uint(boardW*boardH); i++ {
 		depthCaches[i] = make(map[BoardKey]GameEnding)
 	}
