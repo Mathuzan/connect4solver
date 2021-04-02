@@ -17,7 +17,7 @@ const (
 	EmptyCell   = "."
 )
 
-type GameEnding rune
+type GameEnding uint8
 
 const (
 	Win  GameEnding = 'W'

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	log "github.com/igrek51/log15"
@@ -14,16 +13,14 @@ type MoveSolver struct {
 	lastBoardPrintTime time.Time
 	progressBar        *progressbar.ProgressBar
 
-	iterations           uint64
-	cacheUsages          uint64
-	cachedDepthHistogram map[uint]uint64
-	movesOrder           []int
+	iterations uint64
+	movesOrder []int
 }
 
 const progressBarResolution = 1000000000
 
 func NewMoveSolver(board *Board) *MoveSolver {
-	maxCacheDepth := uint(26)
+	maxCacheDepth := uint(board.w * board.h)
 
 	log.Debug("Parameters set", log.Ctx{
 		"maxCacheDepth": maxCacheDepth,
@@ -34,11 +31,10 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	})
 
 	return &MoveSolver{
-		cache:                NewEndingCache(maxCacheDepth, board.w, board.h),
-		lastBoardPrintTime:   time.Now(),
-		progressBar:          progressbar.Default(progressBarResolution),
-		cachedDepthHistogram: map[uint]uint64{},
-		movesOrder:           CalculateMovesOrder(board),
+		cache:              NewEndingCache(maxCacheDepth, board.w, board.h),
+		lastBoardPrintTime: time.Now(),
+		progressBar:        progressbar.Default(progressBarResolution),
+		movesOrder:         CalculateMovesOrder(board),
 	}
 }
 
@@ -64,14 +60,7 @@ func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 		endings[move] = ending
 	}
 
-	keys := make([]uint, 0, len(s.cachedDepthHistogram))
-	for k := range s.cachedDepthHistogram {
-		keys = append(keys, k)
-	}
-	sort.Slice(keys, func(i, j int) bool { return keys[i] < keys[j] })
-	for _, k := range keys {
-		log.Debug(fmt.Sprintf("depth: %d, cached entries: %d", k, s.cachedDepthHistogram[k]))
-	}
+	s.cache.ShowStatistics()
 
 	return endings
 }
@@ -93,7 +82,6 @@ func (s *MoveSolver) bestEndingOnMove(
 	if depth <= s.cache.maxCacheDepth {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
-			s.cacheUsages++
 			return ending
 		}
 	}
@@ -165,11 +153,11 @@ func (s *MoveSolver) ReportStatus(
 	progressEnd float64,
 ) {
 	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize":     s.cache.Size(),
-		"iterations":    s.iterations,
-		"cacheUsages":   s.cacheUsages,
-		"progressStart": progressStart,
-		"depth":         depth,
+		"cacheSize":   s.cache.Size(),
+		"iterations":  s.iterations,
+		"cacheUsages": s.cache.cacheUsages,
+		"progress":    progressStart,
+		"depth":       depth,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
