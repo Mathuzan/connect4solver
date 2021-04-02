@@ -9,8 +9,8 @@ type Referee struct {
 	h         int
 	winStreak int
 
-	verticalMovesMap map[uint64]Player
-	binaryRowMap     map[uint64]bool
+	verticalMovesMap []Player
+	binaryRowMap     []bool
 	winStreak1       int
 
 	winner       Player
@@ -29,7 +29,7 @@ func NewReferee(board *Board) *Referee {
 	}
 
 	// get all possible column layouts and pre-calculate winners for them
-	verticalMovesMap := make(map[uint64]Player)
+	verticalMovesMap := make([]Player, 1<<(s.h+1))
 	for colState := uint64(0); colState <= (1<<(s.h+1))-1; colState++ {
 		verticalMovesMap[colState] = s.whoWonColumn(colState)
 	}
@@ -40,7 +40,7 @@ func NewReferee(board *Board) *Referee {
 		maxSize = s.h
 	}
 	// binary row is represented as: 1 - desired token of player, 0 - opponent's token or empty
-	binaryRowMap := make(map[uint64]bool)
+	binaryRowMap := make([]bool, 1<<maxSize)
 	for binaryRow := uint64(0); binaryRow <= (1<<maxSize)-1; binaryRow++ {
 		binaryRowMap[binaryRow] = s.hasWonRow(binaryRow)
 	}

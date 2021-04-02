@@ -4,13 +4,14 @@ import (
 	log "github.com/igrek51/log15"
 )
 
-const maxCacheDepthSize = 200_000_000
+const maxCacheDepthSize = 50_000_000
 
 type EndingCache struct {
 	depthCaches   []map[uint64]GameEnding
 	maxCacheDepth uint
 	cachedEntries uint64
 	cacheUsages   uint64
+	clears        uint64
 
 	boardW  int
 	boardH  int
@@ -49,7 +50,9 @@ func (s *EndingCache) Put(board *Board, depth uint, ending GameEnding) GameEndin
 	}
 	if len(s.depthCaches[depth]) >= maxCacheDepthSize {
 		log.Debug("clearing cache", log.Ctx{"depth": depth})
+		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
 		s.depthCaches[depth] = make(map[uint64]GameEnding)
+		s.clears++
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.state)] = ending
 	s.cachedEntries++

@@ -158,6 +158,7 @@ func (s *MoveSolver) ReportStatus(
 		"cacheUsages": s.cache.cacheUsages,
 		"progress":    progressStart,
 		"depth":       depth,
+		"cacheClears": s.cache.clears,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {

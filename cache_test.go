@@ -13,10 +13,10 @@ func TestEvaluateKey(t *testing.T) {
 . A B A
 `)
 	key := board.state
-	byte1 := [7]byte(key)[0]
-	byte2 := [7]byte(key)[1]
-	byte3 := [7]byte(key)[2]
-	byte4 := [7]byte(key)[3]
+	byte1 := [7]uint64(key)[0]
+	byte2 := [7]uint64(key)[1]
+	byte3 := [7]uint64(key)[2]
+	byte4 := [7]uint64(key)[3]
 	assert.EqualValues(t, byte(0b00000001), byte1)
 	assert.EqualValues(t, byte(0b00000010), byte2)
 	assert.EqualValues(t, byte(0b00000011), byte3)
