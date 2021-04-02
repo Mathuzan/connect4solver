@@ -20,7 +20,7 @@ type Board struct {
 	referee *Referee
 }
 
-type BoardKey [7]uint8
+type BoardKey [7]uint64
 
 func NewBoard(options ...Option) *Board {
 	// set defaults
@@ -39,7 +39,7 @@ func NewBoard(options ...Option) *Board {
 	}
 
 	// validate & post-process
-	b.state = [7]uint8{}
+	b.state = [7]uint64{}
 	for x := 0; x < b.w; x++ {
 		b.state[x] = 0b1
 	}
@@ -75,7 +75,7 @@ func (b *Board) GetCell(x int, y int) Player {
 func (b *Board) Throw(x int, player Player) int {
 	colSize := b.stackSize(x)
 	// reset column signifying stack size
-	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize + 1)) | (uint8(player) << colSize)
+	b.state[x] = (b.state[x] & ^(1 << colSize)) | (1 << (colSize + 1)) | (uint64(player) << colSize)
 	return colSize
 }
 
@@ -85,7 +85,7 @@ func (b *Board) Revert(x int, y int) {
 }
 
 func (b *Board) stackSize(x int) int {
-	return 7 - bits.LeadingZeros8(b.state[x])
+	return 7 - bits.LeadingZeros8(uint8(b.state[x]))
 }
 
 const (
@@ -166,7 +166,7 @@ func (b *Board) CanMakeMove(x int) bool {
 }
 
 func (b *Board) Clone() *Board {
-	state := [7]byte{}
+	state := [7]uint64{}
 	for x := 0; x < b.w; x++ {
 		state[x] = b.state[x]
 	}

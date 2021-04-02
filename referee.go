@@ -9,15 +9,15 @@ type Referee struct {
 	h         int
 	winStreak int
 
-	verticalMovesMap map[uint8]Player
-	binaryRowMap     map[uint8]bool
+	verticalMovesMap map[uint64]Player
+	binaryRowMap     map[uint64]bool
 	winStreak1       int
 
 	winner       Player
 	lastToken    Player
 	currentToken Player
 	sameStreak   int
-	stacksSum    uint8
+	stacksSum    uint64
 }
 
 func NewReferee(board *Board) *Referee {
@@ -29,8 +29,8 @@ func NewReferee(board *Board) *Referee {
 	}
 
 	// get all possible column layouts and pre-calculate winners for them
-	verticalMovesMap := make(map[uint8]Player)
-	for colState := uint8(0); colState <= (1<<(s.h+1))-1; colState++ {
+	verticalMovesMap := make(map[uint64]Player)
+	for colState := uint64(0); colState <= (1<<(s.h+1))-1; colState++ {
 		verticalMovesMap[colState] = s.whoWonColumn(colState)
 	}
 	s.verticalMovesMap = verticalMovesMap
@@ -40,8 +40,8 @@ func NewReferee(board *Board) *Referee {
 		maxSize = s.h
 	}
 	// binary row is represented as: 1 - desired token of player, 0 - opponent's token or empty
-	binaryRowMap := make(map[uint8]bool)
-	for binaryRow := uint8(0); binaryRow <= (1<<maxSize)-1; binaryRow++ {
+	binaryRowMap := make(map[uint64]bool)
+	for binaryRow := uint64(0); binaryRow <= (1<<maxSize)-1; binaryRow++ {
 		binaryRowMap[binaryRow] = s.hasWonRow(binaryRow)
 	}
 	s.binaryRowMap = binaryRowMap
@@ -61,7 +61,7 @@ func (s *Referee) HasPlayerWonVertical(board *Board, move int, player Player) bo
 }
 
 func (s *Referee) HasPlayerWonHorizontal(board *Board, y int, player Player) bool {
-	var binaryRow uint8
+	var binaryRow uint64
 	for x := 0; x < s.w; x++ {
 		if board.GetCell(x, y) == player {
 			binaryRow |= 1 << x
@@ -71,7 +71,7 @@ func (s *Referee) HasPlayerWonHorizontal(board *Board, y int, player Player) boo
 }
 
 func (s *Referee) HasPlayerWonDiagonal(board *Board, startX int, startY int, player Player) bool {
-	var binaryRow uint8
+	var binaryRow uint64
 	y := startY - s.winStreak1
 	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
 		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
@@ -85,7 +85,7 @@ func (s *Referee) HasPlayerWonDiagonal(board *Board, startX int, startY int, pla
 }
 
 func (s *Referee) HasPlayerWonDiagonalCounter(board *Board, startX int, startY int, player Player) bool {
-	var binaryRow uint8
+	var binaryRow uint64
 	y := startY + s.winStreak1
 	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
 		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
@@ -134,7 +134,7 @@ func (s *Referee) checkHorizontal(board *Board) Player {
 		s.stacksSum |= board.state[x]
 	}
 
-	for y := 0; y < 7-bits.LeadingZeros8(s.stacksSum); y++ {
+	for y := 0; y < 7-bits.LeadingZeros8(uint8(s.stacksSum)); y++ {
 		s.lastToken = board.GetCell(0, y)
 		s.sameStreak = 1
 
@@ -229,7 +229,7 @@ func (s *Referee) checkDiagonal(board *Board, xstart, ystart, xstep int) Player 
 // Clear first bits, get last (stack size - (winStreak-1)): & ((1 << (stacksize - (winStreak-1))) -1):
 //								  &: 000oooo01111111111
 // Is different than 0?
-func (s *Referee) checkColumnSequence(board *Board, columnState uint8, stackSize int) Player {
+func (s *Referee) checkColumnSequence(board *Board, columnState uint64, stackSize int) Player {
 	if stackSize < board.winStreak {
 		return Empty
 	}
@@ -242,7 +242,7 @@ func (s *Referee) checkColumnSequence(board *Board, columnState uint8, stackSize
 		onesA &= onesA >> 1
 	}
 
-	var mask uint8 = (1 << (stackSize - (board.winStreak - 1))) - 1
+	var mask uint64 = (1 << (stackSize - (board.winStreak - 1))) - 1
 
 	if onesA&mask != 0 {
 		return PlayerA
@@ -253,11 +253,11 @@ func (s *Referee) checkColumnSequence(board *Board, columnState uint8, stackSize
 	return Empty
 }
 
-func getStackSize(columnState uint8) int {
-	return 7 - bits.LeadingZeros8(columnState)
+func getStackSize(columnState uint64) int {
+	return 7 - bits.LeadingZeros8(uint8(columnState))
 }
 
-func (s *Referee) whoWonColumn(columnState uint8) Player {
+func (s *Referee) whoWonColumn(columnState uint64) Player {
 	stackSize := getStackSize(columnState)
 	if stackSize < s.winStreak {
 		return Empty
@@ -271,7 +271,7 @@ func (s *Referee) whoWonColumn(columnState uint8) Player {
 		onesA &= onesA >> 1
 	}
 
-	var mask uint8 = (1 << (stackSize - s.winStreak1)) - 1
+	var mask uint64 = (1 << (stackSize - s.winStreak1)) - 1
 
 	if onesA&mask != 0 {
 		return PlayerA
@@ -282,7 +282,7 @@ func (s *Referee) whoWonColumn(columnState uint8) Player {
 	return Empty
 }
 
-func (s *Referee) hasWonRow(row uint8) bool {
+func (s *Referee) hasWonRow(row uint64) bool {
 	ones := row
 	for i := 0; i < s.winStreak1; i++ {
 		ones &= ones >> 1
