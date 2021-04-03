@@ -3,7 +3,7 @@ Connect 4 Game solver in Go. It finds winning strategy in "Connect Four" game (a
 
 ## Building & Running
 ```bash
-go build && ./c4solver
+go build && ./c4solver --size 7x6
 ```
 
 See help for usage:
@@ -13,7 +13,7 @@ See help for usage:
 
 ## Testing
 ```bash
-go test -v
+go test .
 ```
 
 Run benchmarks
