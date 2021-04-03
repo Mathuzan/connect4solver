@@ -16,6 +16,7 @@ type MoveSolver struct {
 
 	iterations uint64
 	movesOrder []int
+	Interrupt  bool
 }
 
 const progressBarResolution = 1_000_000_000
@@ -41,8 +42,19 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	}
 }
 
-func (s *MoveSolver) MovesEndings(board *Board) []Player {
-	endings := make([]Player, board.w)
+func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
+	defer func() {
+		if r := recover(); r != nil {
+			_, ok := r.(InterruptType)
+			if !ok {
+				panic(r)
+			}
+			log.Debug("Interrupted")
+			endings = nil
+		}
+	}()
+
+	endings = make([]Player, board.w)
 	player := board.NextPlayer()
 
 	for move := 0; move < board.w; move++ {
@@ -81,6 +93,9 @@ func (s *MoveSolver) bestEndingOnMove(
 	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
+		if s.Interrupt {
+			panic(InterruptError)
+		}
 	}
 
 	if board.referee.HasPlayerWon(board, move, y, player) {

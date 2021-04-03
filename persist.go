@@ -16,14 +16,7 @@ func SaveCache(cache *EndingCache) error {
 	maxDepth := int(cache.maxCacheDepth / 2)
 	filename := cacheFilename(cache.boardW, cache.boardH)
 
-	log.Debug("Saving cache...", log.Ctx{
-		"filename": filename,
-		"entries":  cache.Size(),
-		"maxDepth": maxDepth,
-	})
-
 	dephtCaches := cacheToProto(cache, maxDepth)
-
 	outBytes, err := proto.Marshal(dephtCaches)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal cache to proto")
@@ -31,7 +24,7 @@ func SaveCache(cache *EndingCache) error {
 	if err := ioutil.WriteFile(filename, outBytes, 0644); err != nil {
 		return errors.Wrap(err, "failed to write to file")
 	}
-	log.Info("Cache saved", log.Ctx{
+	log.Debug("Cache saved", log.Ctx{
 		"filename": filename,
 		"entries":  cache.Size(),
 		"maxDepth": maxDepth,

@@ -26,6 +26,7 @@ func main() {
 
 	fmt.Println("Finding moves results...")
 	solver := NewMoveSolver(board)
+	HandleInterrupt(solver)
 
 	if cacheEnabled && CacheFileExists(board) {
 		cache, err := LoadCache(board)
@@ -38,11 +39,16 @@ func main() {
 	startTime := time.Now()
 	endings := solver.MovesEndings(board)
 	totalElapsed := time.Since(startTime)
+
 	log.Info("Board solved", log.Ctx{
 		"solveTime":   totalElapsed,
 		"boardWidth":  width,
 		"boardHeight": height,
 		"winStreak":   winStreak,
+		"cacheSize":   solver.cache.Size(),
+		"iterations":  solver.iterations,
+		"cacheUsages": solver.cache.cacheUsages,
+		"cacheClears": solver.cache.clears,
 	})
 	for move, ending := range endings {
 		playerEnding := EndingForPlayer(ending, myPlayer)
