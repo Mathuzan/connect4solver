@@ -27,7 +27,7 @@ func main() {
 	fmt.Println("Finding moves results...")
 	solver := NewMoveSolver(board)
 
-	if cacheEnabled && CacheFileExists() {
+	if cacheEnabled && CacheFileExists(board) {
 		cache, err := LoadCache(board)
 		if err != nil {
 			panic(errors.Wrap(err, "loading cache"))

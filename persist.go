@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -11,13 +12,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const outCacheFile = "cache.bin"
-
 func SaveCache(cache *EndingCache) error {
 	maxDepth := int(cache.maxCacheDepth / 2)
+	filename := cacheFilename(cache.boardW, cache.boardH)
 
 	log.Debug("Saving cache...", log.Ctx{
-		"filename": outCacheFile,
+		"filename": filename,
 		"entries":  cache.Size(),
 		"maxDepth": maxDepth,
 	})
@@ -28,11 +28,11 @@ func SaveCache(cache *EndingCache) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal cache to proto")
 	}
-	if err := ioutil.WriteFile(outCacheFile, outBytes, 0644); err != nil {
+	if err := ioutil.WriteFile(filename, outBytes, 0644); err != nil {
 		return errors.Wrap(err, "failed to write to file")
 	}
 	log.Info("Cache saved", log.Ctx{
-		"filename": outCacheFile,
+		"filename": filename,
 		"entries":  cache.Size(),
 		"maxDepth": maxDepth,
 	})
@@ -40,7 +40,8 @@ func SaveCache(cache *EndingCache) error {
 }
 
 func LoadCache(board *Board) (*EndingCache, error) {
-	in, err := ioutil.ReadFile(outCacheFile)
+	filename := cacheFilename(board.w, board.h)
+	in, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading file")
 	}
@@ -52,7 +53,7 @@ func LoadCache(board *Board) (*EndingCache, error) {
 	cache := protoToCache(dephtCaches, board.w, board.h)
 
 	log.Debug("Cache loaded", log.Ctx{
-		"filename": outCacheFile,
+		"filename": filename,
 		"entries":  cache.Size(),
 		"maxDepth": cache.HighestDepth(),
 	})
@@ -60,8 +61,9 @@ func LoadCache(board *Board) (*EndingCache, error) {
 	return cache, nil
 }
 
-func CacheFileExists() bool {
-	_, err := os.Stat(outCacheFile)
+func CacheFileExists(board *Board) bool {
+	filename := cacheFilename(board.w, board.h)
+	_, err := os.Stat(filename)
 	return err == nil
 }
 
@@ -92,4 +94,8 @@ func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCa
 		cache.cachedEntries += uint64(len(depthCache.Entries))
 	}
 	return cache
+}
+
+func cacheFilename(boardW, boardH int) string {
+	return fmt.Sprintf("cache_%dx%d.bin", boardW, boardH)
 }

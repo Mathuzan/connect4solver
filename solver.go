@@ -55,6 +55,8 @@ func (s *MoveSolver) MovesEndings(board *Board) []Player {
 	return endings
 }
 
+const itReportPeriodMask = 0b11111111111111111111 // % 2^20 (1048576) mask
+
 // bestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) bestEndingOnMove(
 	board *Board,
@@ -76,7 +78,7 @@ func (s *MoveSolver) bestEndingOnMove(
 		}
 	}
 
-	if s.iterations%10000 == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
+	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
 	}

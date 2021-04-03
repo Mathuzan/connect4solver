@@ -12,7 +12,7 @@ func getArgs() (int, int, int, bool, bool) {
 	boardSize := flag.String("size", "", "board size (7x6)")
 
 	profileEnabled := flag.Bool("profile", false, "Enable pprof CPU profiling")
-	nocacheEnabled := flag.Bool("nocache", false, "Dont load endings cache from file")
+	cacheEnabled := flag.Bool("cache", false, "Load cached endings from file")
 
 	flag.Parse()
 
@@ -20,5 +20,5 @@ func getArgs() (int, int, int, bool, bool) {
 		fmt.Sscanf(*boardSize, "%dx%d", boardWidth, boardHeight)
 	}
 
-	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, !*nocacheEnabled
+	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, *cacheEnabled
 }
