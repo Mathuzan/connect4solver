@@ -39,4 +39,9 @@ func main() {
 		"boardHeight": height,
 		"winStreak":   winStreak,
 	})
+
+	err := SaveCache(solver.cache)
+	if err != nil {
+		panic(err)
+	}
 }

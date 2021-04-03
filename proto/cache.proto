@@ -1,0 +1,12 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "github.com/igrek51/connect4solver/proto";
+
+message DepthCaches {
+    repeated DepthCache depthCaches = 1;
+}
+
+message DepthCache {
+    map<uint64, uint32> entries = 1;
+}
