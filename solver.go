@@ -21,19 +21,23 @@ type MoveSolver struct {
 const progressBarResolution = 1_000_000_000
 
 func NewMoveSolver(board *Board) *MoveSolver {
+	movesOrder := CalculateMovesOrder(board)
+	cache := NewEndingCache(board.w, board.h)
 	log.Debug("Parameters set", log.Ctx{
-		"boardWidth":  board.w,
-		"boardHeight": board.h,
-		"winStreak":   board.winStreak,
-		"movesOrder":  CalculateMovesOrder(board),
+		"boardWidth":        board.w,
+		"boardHeight":       board.h,
+		"winStreak":         board.winStreak,
+		"movesOrder":        movesOrder,
+		"maxCacheDepth":     cache.maxCacheDepth,
+		"maxCacheDepthSize": cache.maxCacheDepthSize,
 	})
 
 	return &MoveSolver{
-		cache:              NewEndingCache(board.w, board.h),
+		cache:              cache,
 		lastBoardPrintTime: time.Now(),
 		startTime:          time.Now(),
 		progressBar:        progressbar.Default(progressBarResolution),
-		movesOrder:         CalculateMovesOrder(board),
+		movesOrder:         movesOrder,
 	}
 }
 

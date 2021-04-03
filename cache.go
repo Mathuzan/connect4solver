@@ -99,3 +99,13 @@ func (s *EndingCache) ShowStatistics() {
 		})
 	}
 }
+
+func (s *EndingCache) HighestDepth() int {
+	maxd := 0
+	for d, depthCache := range s.depthCaches {
+		if len(depthCache) > len(s.depthCaches[maxd]) {
+			maxd = d
+		}
+	}
+	return maxd
+}

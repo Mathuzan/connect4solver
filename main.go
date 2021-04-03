@@ -7,10 +7,11 @@ import (
 	"time"
 
 	log "github.com/igrek51/log15"
+	"github.com/pkg/errors"
 )
 
 func main() {
-	width, height, winStreak, profileEnabled := getArgs()
+	width, height, winStreak, profileEnabled, cacheEnabled := getArgs()
 
 	if profileEnabled {
 		log.Info("Starting CPU profiler")
@@ -24,8 +25,17 @@ func main() {
 	fmt.Println(board.String())
 
 	fmt.Println("Finding moves results...")
-	startTime := time.Now()
 	solver := NewMoveSolver(board)
+
+	if cacheEnabled && CacheFileExists() {
+		cache, err := LoadCache(board)
+		if err != nil {
+			panic(errors.Wrap(err, "loading cache"))
+		}
+		solver.cache = cache
+	}
+
+	startTime := time.Now()
 	endings := solver.MovesEndings(board)
 	totalElapsed := time.Since(startTime)
 	log.Info("Board solved", log.Ctx{
@@ -39,9 +49,11 @@ func main() {
 		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 	}
 
-	err := SaveCache(solver.cache)
-	if err != nil {
-		panic(err)
+	if cacheEnabled {
+		err := SaveCache(solver.cache)
+		if err != nil {
+			panic(errors.Wrap(err, "saving cache"))
+		}
 	}
 
 	totalElapsed = time.Since(startTime)
