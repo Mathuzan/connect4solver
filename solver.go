@@ -37,19 +37,8 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	}
 }
 
-func (s *MoveSolver) BestEnding(board *Board) GameEnding {
-	endings := s.MovesEndings(board)
-	bestEnding := Lose
-	for _, ending := range endings {
-		if MoveResultsWeights[ending] > MoveResultsWeights[bestEnding] {
-			bestEnding = ending
-		}
-	}
-	return bestEnding
-}
-
-func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
-	endings := make([]GameEnding, board.w)
+func (s *MoveSolver) MovesEndings(board *Board) []Player {
+	endings := make([]Player, board.w)
 	player := board.NextPlayer()
 
 	for move := 0; move < board.w; move++ {
@@ -58,8 +47,6 @@ func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 		ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
 		endings[move] = ending
 	}
-
-	//s.cache.ShowStatistics()
 
 	return endings
 }
@@ -72,7 +59,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	progressStart float64,
 	progressEnd float64,
 	depth uint,
-) GameEnding {
+) Player {
 	s.iterations++
 
 	y := board.Throw(move, player)
@@ -91,17 +78,14 @@ func (s *MoveSolver) bestEndingOnMove(
 	}
 
 	if board.referee.HasPlayerWon(board, move, y, player) {
-		if player == PlayerA {
-			return Win
-		} else if player == PlayerB {
-			return Lose
-		}
+		return player
 	}
 
 	nextPlayer := oppositePlayer(player)
 
 	// find further possible moves
-	var bestEnding *GameEnding = nil
+	var bestEnding Player = Empty // Tie as a default ending (when no more moves)
+	endingProcessed := 0
 	for moveIndex := 0; moveIndex < board.w; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
 			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
@@ -110,39 +94,22 @@ func (s *MoveSolver) bestEndingOnMove(
 				depth+1,
 			)
 
-			if nextPlayer == PlayerA {
-				// player A chooses highest possible move
-				if moveEnding == Win { // short-circuit, cant be better
-					return s.cache.Put(board, depth, Win)
-				}
-				if bestEnding == nil || MoveResultsWeights[moveEnding] > MoveResultsWeights[*bestEnding] {
-					bestEnding = &moveEnding
-				}
-			} else {
-				// player B chooses worst possible move
-				if moveEnding == Lose { // short-circuit, cant be worse
-					return s.cache.Put(board, depth, Lose)
-				}
-				if bestEnding == nil || MoveResultsWeights[moveEnding] < MoveResultsWeights[*bestEnding] {
-					bestEnding = &moveEnding
-				}
+			if moveEnding == nextPlayer { // short-circuit, cant be better than winning
+				return s.cache.Put(board, depth, moveEnding)
 			}
+			// player favors Tie over Lose
+			if endingProcessed == 0 || moveEnding == Empty {
+				bestEnding = moveEnding
+			}
+			endingProcessed++
 		}
 	}
 
-	if bestEnding == nil {
-		return s.cache.Put(board, depth, Tie)
-	}
-
-	return s.cache.Put(board, depth, *bestEnding)
+	return s.cache.Put(board, depth, bestEnding)
 }
 
 func oppositePlayer(player Player) Player {
-	if player == PlayerA {
-		return PlayerB
-	} else {
-		return PlayerA
-	}
+	return 1 - player
 }
 
 func (s *MoveSolver) ReportStatus(
@@ -170,11 +137,12 @@ func (s *MoveSolver) ReportStatus(
 	}
 }
 
+// BestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) BestEndingOnMove(
 	board *Board,
 	player Player,
 	move int,
-) GameEnding {
+) Player {
 	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
 }
 

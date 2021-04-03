@@ -1,10 +1,5 @@
 package main
 
-const BoardWidth = 7
-const BoardHeight = 6
-
-const MinWinCondition = 4
-
 type Player uint8
 
 const (
@@ -17,28 +12,22 @@ const (
 	EmptyCell   = "."
 )
 
-type GameEnding uint8
+type GameEnding string
 
 const (
-	Win  GameEnding = 'W'
-	Tie  GameEnding = 'T'
-	Lose GameEnding = 'L'
+	Win  GameEnding = "Win"
+	Tie  GameEnding = "Tie"
+	Lose GameEnding = "Lose"
 )
 
-var MoveResultsWeights = map[GameEnding]int{
-	Win:  1,
-	Tie:  0,
-	Lose: -1,
-}
-
-var PlayerDisplays = map[Player]rune{
-	PlayerA: 'A',
-	PlayerB: 'B',
-	Empty:   '.',
+var PlayerDisplays = map[Player]string{
+	PlayerA: "A",
+	PlayerB: "B",
+	Empty:   ".",
 }
 
 func (p Player) String() string {
-	return string(p)
+	return PlayerDisplays[p]
 }
 
 func (e GameEnding) String() string {

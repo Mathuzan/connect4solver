@@ -36,13 +36,13 @@ A A B . A
 `)
 	cache := NewEndingCache(5, 3)
 
-	cache.Put(boardL, 7, Win)
+	cache.Put(boardL, 7, PlayerA)
 
 	end, ok := cache.Get(boardL, 7)
 	assert.EqualValues(t, true, ok)
-	assert.EqualValues(t, Win, end)
+	assert.EqualValues(t, PlayerA, end)
 
 	end, ok = cache.Get(boardR, 7)
 	assert.EqualValues(t, true, ok)
-	assert.EqualValues(t, Win, end)
+	assert.EqualValues(t, PlayerA, end)
 }

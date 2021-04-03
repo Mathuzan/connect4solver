@@ -7,7 +7,7 @@ import (
 const maxCacheSize = 1_500_000_000
 
 type EndingCache struct {
-	depthCaches       []map[uint64]GameEnding
+	depthCaches       []map[uint64]Player
 	maxCacheDepthSize int
 	maxCacheDepth     uint
 	cachedEntries     uint64
@@ -21,9 +21,9 @@ type EndingCache struct {
 }
 
 func NewEndingCache(boardW int, boardH int) *EndingCache {
-	depthCaches := make([]map[uint64]GameEnding, boardW*boardH)
+	depthCaches := make([]map[uint64]Player, boardW*boardH)
 	for i := uint(0); i < uint(boardW*boardH); i++ {
-		depthCaches[i] = make(map[uint64]GameEnding)
+		depthCaches[i] = make(map[uint64]Player)
 	}
 
 	return &EndingCache{
@@ -37,7 +37,7 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	}
 }
 
-func (s *EndingCache) Get(board *Board, depth uint) (ending GameEnding, ok bool) {
+func (s *EndingCache) Get(board *Board, depth uint) (ending Player, ok bool) {
 	ending, ok = s.depthCaches[depth][s.reflectedBoardKey(board.state)]
 	if !ok {
 		return
@@ -46,14 +46,14 @@ func (s *EndingCache) Get(board *Board, depth uint) (ending GameEnding, ok bool)
 	return
 }
 
-func (s *EndingCache) Put(board *Board, depth uint, ending GameEnding) GameEnding {
+func (s *EndingCache) Put(board *Board, depth uint, ending Player) Player {
 	if depth > s.maxCacheDepth {
 		return ending
 	}
 	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
 		log.Debug("clearing cache", log.Ctx{"depth": depth})
 		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
-		s.depthCaches[depth] = make(map[uint64]GameEnding)
+		s.depthCaches[depth] = make(map[uint64]Player)
 		s.clears++
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.state)] = ending

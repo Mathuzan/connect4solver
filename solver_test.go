@@ -15,17 +15,14 @@ func TestBestResultSimplest4(t *testing.T) {
 	`)
 	solver := NewMoveSolver(board)
 
-	assert.Equal(t, Win,
+	assert.Equal(t, PlayerA,
 		solver.BestEndingOnMove(board, PlayerA, 0))
-	assert.Equal(t, Lose,
+	assert.Equal(t, PlayerB,
 		solver.BestEndingOnMove(board, PlayerA, 1))
-	assert.Equal(t, Win,
+	assert.Equal(t, PlayerA,
 		solver.BestEndingOnMove(board, PlayerA, 2))
-	assert.Equal(t, Lose,
+	assert.Equal(t, PlayerB,
 		solver.BestEndingOnMove(board, PlayerA, 3))
-
-	assert.Equal(t, Win,
-		solver.BestEnding(board))
 }
 
 func TestBestResultSimpleTie(t *testing.T) {
@@ -37,13 +34,10 @@ func TestBestResultSimpleTie(t *testing.T) {
 	`)
 	solver := NewMoveSolver(board)
 
-	assert.Equal(t, Win,
+	assert.Equal(t, PlayerA,
 		solver.BestEndingOnMove(board, PlayerA, 0))
-	assert.Equal(t, Tie,
+	assert.Equal(t, Empty,
 		solver.BestEndingOnMove(board, PlayerA, 1))
-
-	assert.Equal(t, Win,
-		solver.BestEnding(board))
 }
 
 func TestBestResult3x3(t *testing.T) {
@@ -51,7 +45,7 @@ func TestBestResult3x3(t *testing.T) {
 	solver := NewMoveSolver(board)
 	endings := solver.MovesEndings(board)
 
-	assert.Equal(t, []GameEnding{Tie, Tie, Tie},
+	assert.Equal(t, []Player{Empty, Empty, Empty},
 		endings)
 }
 
@@ -60,9 +54,9 @@ func TestBestResult3x3Unfair(t *testing.T) {
 	solver := NewMoveSolver(board)
 	endings := solver.MovesEndings(board)
 
-	assert.Equal(t, Win,
+	assert.Equal(t, PlayerA,
 		solver.BestEndingOnMove(board, PlayerA, 1))
-	assert.Equal(t, []GameEnding{Win, Win, Win},
+	assert.Equal(t, []Player{PlayerA, PlayerA, PlayerA},
 		endings)
 }
 
@@ -71,7 +65,7 @@ func TestBestResult2x2Unfair(t *testing.T) {
 	solver := NewMoveSolver(board)
 	endings := solver.MovesEndings(board)
 
-	assert.Equal(t, []GameEnding{Win, Win},
+	assert.Equal(t, []Player{PlayerA, PlayerA},
 		endings)
 }
 
@@ -80,6 +74,6 @@ func BenchmarkMoveSolver4x4(b *testing.B) {
 	solver := NewMoveSolver(board)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		solver.BestEnding(board)
+		solver.MovesEndings(board)
 	}
 }
