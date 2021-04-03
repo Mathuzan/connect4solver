@@ -34,7 +34,7 @@ A . B A A
 . B . . A
 A A B . A
 `)
-	cache := NewEndingCache(999, 5, 3)
+	cache := NewEndingCache(5, 3)
 
 	cache.Put(boardL, 7, Win)
 

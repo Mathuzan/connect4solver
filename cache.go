@@ -4,14 +4,15 @@ import (
 	log "github.com/igrek51/log15"
 )
 
-const maxCacheDepthSize = 50_000_000
+const maxCacheSize = 1_500_000_000
 
 type EndingCache struct {
-	depthCaches   []map[uint64]GameEnding
-	maxCacheDepth uint
-	cachedEntries uint64
-	cacheUsages   uint64
-	clears        uint64
+	depthCaches       []map[uint64]GameEnding
+	maxCacheDepthSize int
+	maxCacheDepth     uint
+	cachedEntries     uint64
+	cacheUsages       uint64
+	clears            uint64
 
 	boardW  int
 	boardH  int
@@ -19,19 +20,20 @@ type EndingCache struct {
 	sideW   int
 }
 
-func NewEndingCache(maxCacheDepth uint, boardW int, boardH int) *EndingCache {
+func NewEndingCache(boardW int, boardH int) *EndingCache {
 	depthCaches := make([]map[uint64]GameEnding, boardW*boardH)
 	for i := uint(0); i < uint(boardW*boardH); i++ {
 		depthCaches[i] = make(map[uint64]GameEnding)
 	}
 
 	return &EndingCache{
-		depthCaches:   depthCaches,
-		maxCacheDepth: maxCacheDepth,
-		boardW:        boardW,
-		boardH:        boardH,
-		boardW1:       boardW - 1,
-		sideW:         boardW / 2,
+		depthCaches:       depthCaches,
+		maxCacheDepthSize: maxCacheSize / (boardW * boardH),
+		maxCacheDepth:     uint(boardW*boardH) - 2,
+		boardW:            boardW,
+		boardH:            boardH,
+		boardW1:           boardW - 1,
+		sideW:             boardW / 2,
 	}
 }
 
@@ -48,7 +50,7 @@ func (s *EndingCache) Put(board *Board, depth uint, ending GameEnding) GameEndin
 	if depth > s.maxCacheDepth {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= maxCacheDepthSize {
+	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
 		log.Debug("clearing cache", log.Ctx{"depth": depth})
 		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
 		s.depthCaches[depth] = make(map[uint64]GameEnding)

@@ -17,21 +17,18 @@ type MoveSolver struct {
 	movesOrder []int
 }
 
-const progressBarResolution = 1000000000
+const progressBarResolution = 1_000_000_000
 
 func NewMoveSolver(board *Board) *MoveSolver {
-	maxCacheDepth := uint(board.w * board.h)
-
 	log.Debug("Parameters set", log.Ctx{
-		"maxCacheDepth": maxCacheDepth,
-		"boardWidth":    board.w,
-		"boardHeight":   board.h,
-		"winStreak":     board.winStreak,
-		"movesOrder":    CalculateMovesOrder(board),
+		"boardWidth":  board.w,
+		"boardHeight": board.h,
+		"winStreak":   board.winStreak,
+		"movesOrder":  CalculateMovesOrder(board),
 	})
 
 	return &MoveSolver{
-		cache:              NewEndingCache(maxCacheDepth, board.w, board.h),
+		cache:              NewEndingCache(board.w, board.h),
 		lastBoardPrintTime: time.Now(),
 		progressBar:        progressbar.Default(progressBarResolution),
 		movesOrder:         CalculateMovesOrder(board),
@@ -60,7 +57,7 @@ func (s *MoveSolver) MovesEndings(board *Board) []GameEnding {
 		endings[move] = ending
 	}
 
-	s.cache.ShowStatistics()
+	//s.cache.ShowStatistics()
 
 	return endings
 }
