@@ -27,21 +27,25 @@ func main() {
 	startTime := time.Now()
 	solver := NewMoveSolver(board)
 	endings := solver.MovesEndings(board)
+	totalElapsed := time.Since(startTime)
+	log.Info("Board solved", log.Ctx{
+		"solveTime":   totalElapsed,
+		"boardWidth":  width,
+		"boardHeight": height,
+		"winStreak":   winStreak,
+	})
 	for move, ending := range endings {
 		playerEnding := EndingForPlayer(ending, myPlayer)
 		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 	}
 
-	totalElapsed := time.Since(startTime)
-	log.Info("Done", log.Ctx{
-		"totalTime":   totalElapsed,
-		"boardWidth":  width,
-		"boardHeight": height,
-		"winStreak":   winStreak,
-	})
-
 	err := SaveCache(solver.cache)
 	if err != nil {
 		panic(err)
 	}
+
+	totalElapsed = time.Since(startTime)
+	log.Info("Done", log.Ctx{
+		"totalTime": totalElapsed,
+	})
 }

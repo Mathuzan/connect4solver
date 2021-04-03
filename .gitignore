@@ -8,5 +8,11 @@ __pycache__/
 
 # Go
 go.sum
-**/c4solver
 cpuprof.prof
+
+**/c4solver
+**/connect4solver
+/cache.bin
+
+# Protobuf
+protoc-linux
