@@ -29,7 +29,7 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	return &EndingCache{
 		depthCaches:       depthCaches,
 		maxCacheDepthSize: maxCacheSize / (boardW * boardH),
-		maxCacheDepth:     uint(boardW*boardH) - 2,
+		maxCacheDepth:     uint(boardW*boardH) - 4,
 		boardW:            boardW,
 		boardH:            boardH,
 		boardW1:           boardW - 1,

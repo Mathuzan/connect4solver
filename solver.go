@@ -11,6 +11,7 @@ import (
 type MoveSolver struct {
 	cache              *EndingCache
 	lastBoardPrintTime time.Time
+	startTime          time.Time
 	progressBar        *progressbar.ProgressBar
 
 	iterations uint64
@@ -30,6 +31,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	return &MoveSolver{
 		cache:              NewEndingCache(board.w, board.h),
 		lastBoardPrintTime: time.Now(),
+		startTime:          time.Now(),
 		progressBar:        progressbar.Default(progressBarResolution),
 		movesOrder:         CalculateMovesOrder(board),
 	}
@@ -85,7 +87,7 @@ func (s *MoveSolver) bestEndingOnMove(
 
 	if s.iterations%10000 == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
-		s.ReportStatus(board, depth, progressStart, progressEnd)
+		s.ReportStatus(board, progressStart, progressEnd)
 	}
 
 	if board.referee.HasPlayerWon(board, move, y, player) {
@@ -145,17 +147,22 @@ func oppositePlayer(player Player) Player {
 
 func (s *MoveSolver) ReportStatus(
 	board *Board,
-	depth uint,
 	progressStart float64,
 	progressEnd float64,
 ) {
+	duration := time.Since(s.startTime)
+	var eta time.Duration
+	if progressStart > 0 && duration > 0 {
+		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
+	}
+
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize":   s.cache.Size(),
 		"iterations":  s.iterations,
 		"cacheUsages": s.cache.cacheUsages,
 		"progress":    progressStart,
-		"depth":       depth,
 		"cacheClears": s.cache.clears,
+		"eta":         eta,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
