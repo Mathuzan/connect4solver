@@ -20,6 +20,7 @@ func main() {
 	}
 
 	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
+	myPlayer := PlayerA
 	fmt.Println(board.String())
 
 	fmt.Println("Finding moves results...")
@@ -27,7 +28,8 @@ func main() {
 	solver := NewMoveSolver(board)
 	endings := solver.MovesEndings(board)
 	for move, ending := range endings {
-		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, ending))
+		playerEnding := EndingForPlayer(ending, myPlayer)
+		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 	}
 
 	totalElapsed := time.Since(startTime)

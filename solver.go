@@ -160,3 +160,14 @@ func CalculateMovesOrder(board *Board) []int {
 	}
 	return movesOrder
 }
+
+func EndingForPlayer(ending Player, player Player) GameEnding {
+	if ending == Empty {
+		return Tie
+	}
+	if ending == player {
+		return Win
+	} else {
+		return Lose
+	}
+}
