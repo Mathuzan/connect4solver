@@ -9,13 +9,13 @@ import (
 	log "github.com/igrek51/log15"
 )
 
-func HandleInterrupt(solver *MoveSolver) {
+func HandleInterrupt(solver IMoveSolver) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
 		log.Debug("Signal Interrupt")
-		solver.Interrupt = true
+		solver.Interrupt()
 	}()
 }
 

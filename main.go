@@ -7,8 +7,9 @@ import (
 	"time"
 
 	log "github.com/igrek51/log15"
-	"github.com/pkg/errors"
 )
+
+var myPlayer = PlayerA
 
 func main() {
 	width, height, winStreak, profileEnabled, cacheEnabled := getArgs()
@@ -21,45 +22,34 @@ func main() {
 	}
 
 	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
-	myPlayer := PlayerA
 	fmt.Println(board.String())
 
 	fmt.Println("Finding moves results...")
-	solver := NewMoveSolver(board)
+	var solver IMoveSolver = NewMoveSolver(board)
 	HandleInterrupt(solver)
 
 	if cacheEnabled && CacheFileExists(board) {
-		cache, err := LoadCache(board)
-		if err != nil {
-			panic(errors.Wrap(err, "loading cache"))
-		}
-		solver.cache = cache
+		solver.PreloadCache(board)
 	}
 
 	startTime := time.Now()
 	endings := solver.MovesEndings(board)
 	totalElapsed := time.Since(startTime)
 
-	log.Info("Board solved", log.Ctx{
+	logger := log.New(log.Ctx{
 		"solveTime":   totalElapsed,
 		"boardWidth":  width,
 		"boardHeight": height,
 		"winStreak":   winStreak,
-		"cacheSize":   solver.cache.Size(),
-		"iterations":  solver.iterations,
-		"cacheUsages": solver.cache.cacheUsages,
-		"cacheClears": solver.cache.clears,
 	})
+	logger.Info("Board solved", solver.ContextVars())
 	for move, ending := range endings {
 		playerEnding := EndingForPlayer(ending, myPlayer)
 		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 	}
 
 	if cacheEnabled {
-		err := SaveCache(solver.cache)
-		if err != nil {
-			panic(errors.Wrap(err, "saving cache"))
-		}
+		solver.SaveCache()
 	}
 
 	totalElapsed = time.Since(startTime)

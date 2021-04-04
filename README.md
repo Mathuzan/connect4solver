@@ -8,7 +8,7 @@ go build -o c4solver
 ```
 or in one line:
 ```bash
-./build.sh && ./c4solver --size 5x5 --cache
+./build.sh && ./c4solver --size 7x6 --cache
 ```
 
 See help for usage:

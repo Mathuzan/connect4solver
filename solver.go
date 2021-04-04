@@ -5,8 +5,17 @@ import (
 	"time"
 
 	log "github.com/igrek51/log15"
+	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 )
+
+type IMoveSolver interface {
+	MovesEndings(board *Board) []Player
+	Interrupt()
+	PreloadCache(board *Board)
+	SaveCache()
+	ContextVars() log.Ctx
+}
 
 type MoveSolver struct {
 	cache              *EndingCache
@@ -16,7 +25,7 @@ type MoveSolver struct {
 
 	iterations uint64
 	movesOrder []int
-	Interrupt  bool
+	interrupt  bool
 }
 
 const progressBarResolution = 1_000_000_000
@@ -67,7 +76,7 @@ func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
 	return endings
 }
 
-const itReportPeriodMask = 0b11111111111111111111 // % 2^20 (1048576) mask
+const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
 
 // bestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) bestEndingOnMove(
@@ -93,7 +102,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
-		if s.Interrupt {
+		if s.interrupt {
 			panic(InterruptError)
 		}
 	}
@@ -190,5 +199,33 @@ func EndingForPlayer(ending Player, player Player) GameEnding {
 		return Win
 	} else {
 		return Lose
+	}
+}
+
+func (s *MoveSolver) PreloadCache(board *Board) {
+	cache, err := LoadCache(board)
+	if err != nil {
+		panic(errors.Wrap(err, "loading cache"))
+	}
+	s.cache = cache
+}
+
+func (s *MoveSolver) SaveCache() {
+	err := SaveCache(s.cache)
+	if err != nil {
+		panic(errors.Wrap(err, "saving cache"))
+	}
+}
+
+func (s *MoveSolver) Interrupt() {
+	s.interrupt = true
+}
+
+func (s *MoveSolver) ContextVars() log.Ctx {
+	return log.Ctx{
+		"cacheSize":   s.cache.Size(),
+		"iterations":  s.iterations,
+		"cacheUsages": s.cache.cacheUsages,
+		"cacheClears": s.cache.clears,
 	}
 }

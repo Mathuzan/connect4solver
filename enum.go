@@ -3,8 +3,8 @@ package main
 type Player uint8
 
 const (
-	PlayerA Player = 0
-	PlayerB Player = 1
+	PlayerA Player = 0 // Player A moves first
+	PlayerB Player = 1 // Player B has a second move
 	Empty   Player = 2
 
 	PlayerARune = 'A'
