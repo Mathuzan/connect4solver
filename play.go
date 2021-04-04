@@ -30,6 +30,11 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 		})
 		logger.Info("Board solved", solver.ContextVars())
 
+		if isATie(endings) {
+			log.Info(fmt.Sprintf("%v", Tie))
+			break
+		}
+
 		player := board.NextPlayer()
 		fmt.Println(board.String())
 		printEndingsLine(endings, player)
@@ -39,9 +44,6 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 		moveY := board.Throw(move, player)
 		if board.referee.HasPlayerWon(board, move, moveY, player) {
 			log.Info(fmt.Sprintf("Player %v won", player))
-			break
-		} else if isATie(endings) {
-			log.Info(fmt.Sprintf("%v", Tie))
 			break
 		}
 	}
@@ -85,7 +87,7 @@ func readNextMove(endings []Player, player Player) int {
 			continue
 		}
 		if endings[move] == NoMove {
-			log.Error("Cant move at full column")
+			log.Error("Column is already full")
 			continue
 		}
 		return move
