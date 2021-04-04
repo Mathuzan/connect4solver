@@ -6,6 +6,7 @@ const (
 	PlayerA Player = 0 // Player A moves first
 	PlayerB Player = 1 // Player B has a second move
 	Empty   Player = 2
+	NoMove  Player = 3
 
 	PlayerARune = 'A'
 	PlayerBRune = 'B'
@@ -21,9 +22,16 @@ const (
 )
 
 var PlayerDisplays = map[Player]string{
-	PlayerA: "A",
-	PlayerB: "B",
+	PlayerA: "\u001b[33;1mA\u001b[0m",
+	PlayerB: "\u001b[31;1mB\u001b[0m",
 	Empty:   ".",
+	NoMove:  "-",
+}
+
+var ShortGameEndingDisplays = map[GameEnding]string{
+	Win:  "\u001b[32;1mW\u001b[0m",
+	Tie:  "\u001b[33;1mT\u001b[0m",
+	Lose: "\u001b[31;1mL\u001b[0m",
 }
 
 func (p Player) String() string {

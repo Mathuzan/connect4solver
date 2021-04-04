@@ -88,11 +88,6 @@ func (b *Board) stackSize(x int) int {
 	return 7 - bits.LeadingZeros8(uint8(b.state[x]))
 }
 
-const (
-	ColouredPlayerA = "\u001b[33;1mA\u001b[0m"
-	ColouredPlayerB = "\u001b[31;1mB\u001b[0m"
-)
-
 func (b *Board) String() string {
 	lines := []string{}
 	var line string
@@ -108,13 +103,7 @@ func (b *Board) String() string {
 		rowCells := []string{}
 		for x := 0; x < b.w; x++ {
 			cell := b.GetCell(x, y)
-			if cell == PlayerA {
-				rowCells = append(rowCells, ColouredPlayerA)
-			} else if cell == PlayerB {
-				rowCells = append(rowCells, ColouredPlayerB)
-			} else {
-				rowCells = append(rowCells, EmptyCell)
-			}
+			rowCells = append(rowCells, PlayerDisplays[cell])
 		}
 		line = "| " + strings.Join(rowCells, " ") + " |"
 		lines = append(lines, line)

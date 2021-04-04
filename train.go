@@ -11,7 +11,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
 	fmt.Println(board.String())
 
-	fmt.Println("Finding moves results...")
+	log.Debug("Finding moves results...")
 	var solver IMoveSolver = NewMoveSolver(board)
 	HandleInterrupt(solver)
 
@@ -30,9 +30,13 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 		"winStreak":   winStreak,
 	})
 	logger.Info("Board solved", solver.ContextVars())
+
+	player := board.NextPlayer()
 	for move, ending := range endings {
-		playerEnding := EndingForPlayer(ending, myPlayer)
-		log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
+		if ending != NoMove {
+			playerEnding := EndingForPlayer(ending, player)
+			log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
+		}
 	}
 
 	if cacheEnabled {

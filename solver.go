@@ -66,11 +66,16 @@ func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
 	endings = make([]Player, board.w)
 	player := board.NextPlayer()
 
-	for move := 0; move < board.w; move++ {
-		progressStart := float64(move) / float64(board.w)
-		progressEnd := float64(move+1) / float64(board.w)
-		ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
-		endings[move] = ending
+	for moveIndex := 0; moveIndex < board.w; moveIndex++ {
+		move := s.movesOrder[moveIndex]
+		progressStart := float64(moveIndex) / float64(board.w)
+		progressEnd := float64(moveIndex+1) / float64(board.w)
+		if board.CanMakeMove(move) {
+			ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
+			endings[move] = ending
+		} else {
+			endings[move] = NoMove
+		}
 	}
 
 	return endings

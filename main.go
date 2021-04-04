@@ -7,8 +7,6 @@ import (
 	log "github.com/igrek51/log15"
 )
 
-var myPlayer = PlayerA
-
 func main() {
 	width, height, winStreak, profileEnabled, cacheEnabled, mode := getArgs()
 
