@@ -33,3 +33,10 @@ func (p Player) String() string {
 func (e GameEnding) String() string {
 	return string(e)
 }
+
+type Mode string
+
+const (
+	TrainMode Mode = "train"
+	PlayMode  Mode = "play"
+)

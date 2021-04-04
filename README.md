@@ -2,13 +2,20 @@
 Connect 4 Game solver in Go. It finds winning strategy in "Connect Four" game (also known as "Four in a row")
 
 ## Building & Running
+To build, run:
 ```bash
 go build -o c4solver
-./c4solver --size 7x6 --cache
 ```
-or in one line:
+or run `./build.sh`
+
+Run training mode:
 ```bash
-./build.sh && ./c4solver --size 7x6 --cache
+./build.sh && ./c4solver --train --size 7x6
+```
+
+Run playing a game mode:
+```bash
+./build.sh && ./c4solver --play --size 7x6
 ```
 
 See help for usage:
@@ -21,7 +28,7 @@ See help for usage:
 go test .
 ```
 
-Run benchmarks
+## Run benchmarks
 ```bash
 go test --bench=.
 ```
