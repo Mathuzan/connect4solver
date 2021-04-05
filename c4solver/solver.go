@@ -60,8 +60,8 @@ func NewMoveSolver(board *common.Board) *MoveSolver {
 func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player) {
 	defer func() {
 		if r := recover(); r != nil {
-			_, ok := r.(common.InterruptType)
-			if !ok {
+			err, ok := r.(error)
+			if !ok || !errors.Is(err, common.InterruptError) {
 				panic(r)
 			}
 			log.Debug("Interrupted")

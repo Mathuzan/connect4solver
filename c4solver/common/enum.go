@@ -53,6 +53,4 @@ const (
 	PlayMode  Mode = "play"
 )
 
-type InterruptType error
-
-var InterruptError InterruptType = errors.New("Interrupt")
+var InterruptError error = errors.New("Interrupt")
