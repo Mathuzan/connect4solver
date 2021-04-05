@@ -6,11 +6,11 @@ import (
 
 	log "github.com/igrek51/log15"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
 func Train(width, height, winStreak int, cacheEnabled bool) {
-	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
+	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 	fmt.Println(board.String())
 
 	log.Debug("Finding moves results...")
@@ -34,7 +34,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 
 	player := board.NextPlayer()
 	for move, ending := range endings {
-		if ending != NoMove {
+		if ending != common.NoMove {
 			playerEnding := EndingForPlayer(ending, player)
 			log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 		}
@@ -50,7 +50,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	})
 }
 
-func createSolver(board *Board) IMoveSolver {
+func createSolver(board *common.Board) IMoveSolver {
 	var solver IMoveSolver
 	if board.W == 5 && board.H == 5 {
 		// solver = inline5x5.NewMoveSolver(board)

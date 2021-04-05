@@ -4,10 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
-func GetArgs() (int, int, int, bool, bool, Mode) {
+func GetArgs() (int, int, int, bool, bool, common.Mode) {
 	boardWidth := flag.Int("width", 4, "board width")
 	boardHeight := flag.Int("height", 4, "board height")
 	winStreak := flag.Int("win", 4, "win streak")
@@ -25,12 +25,12 @@ func GetArgs() (int, int, int, bool, bool, Mode) {
 		fmt.Sscanf(*boardSize, "%dx%d", boardWidth, boardHeight)
 	}
 
-	mode := TrainMode
+	mode := common.TrainMode
 	if *train {
-		mode = TrainMode
+		mode = common.TrainMode
 	}
 	if *play {
-		mode = PlayMode
+		mode = common.PlayMode
 	}
 
 	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, !*cacheEnabled, mode

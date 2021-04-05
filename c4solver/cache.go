@@ -1,14 +1,14 @@
 package c4solver
 
 import (
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 	log "github.com/igrek51/log15"
 )
 
 const maxCacheSize = 1_500_000_000
 
 type EndingCache struct {
-	depthCaches       []map[uint64]Player
+	depthCaches       []map[uint64]common.Player
 	maxCacheDepthSize int
 	maxCacheDepth     uint
 	cachedEntries     uint64
@@ -22,9 +22,9 @@ type EndingCache struct {
 }
 
 func NewEndingCache(boardW int, boardH int) *EndingCache {
-	depthCaches := make([]map[uint64]Player, boardW*boardH)
+	depthCaches := make([]map[uint64]common.Player, boardW*boardH)
 	for i := uint(0); i < uint(boardW*boardH); i++ {
-		depthCaches[i] = make(map[uint64]Player)
+		depthCaches[i] = make(map[uint64]common.Player)
 	}
 
 	return &EndingCache{
@@ -38,7 +38,7 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	}
 }
 
-func (s *EndingCache) Get(board *Board, depth uint) (ending Player, ok bool) {
+func (s *EndingCache) Get(board *common.Board, depth uint) (ending common.Player, ok bool) {
 	ending, ok = s.depthCaches[depth][s.reflectedBoardKey(board.State)]
 	if !ok {
 		return
@@ -47,14 +47,14 @@ func (s *EndingCache) Get(board *Board, depth uint) (ending Player, ok bool) {
 	return
 }
 
-func (s *EndingCache) Put(board *Board, depth uint, ending Player) Player {
+func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player) common.Player {
 	if depth > s.maxCacheDepth {
 		return ending
 	}
 	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
 		log.Debug("clearing cache", log.Ctx{"depth": depth})
 		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
-		s.depthCaches[depth] = make(map[uint64]Player)
+		s.depthCaches[depth] = make(map[uint64]common.Player)
 		s.clears++
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending
@@ -69,7 +69,7 @@ func (s *EndingCache) Size() uint64 {
 var leftKey uint64 = 0
 var rightKey uint64 = 0
 
-func (s *EndingCache) reflectedBoardKey(key BoardKey) uint64 {
+func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
 	leftKey = key[0]
 	rightKey = key[s.boardW1]
 	for i := 1; i < s.sideW; i++ {

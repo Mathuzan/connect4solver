@@ -8,14 +8,14 @@ import (
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
 type IMoveSolver interface {
-	MovesEndings(board *Board) []Player
-	HasPlayerWon(board *Board, move int, y int, player Player) bool
+	MovesEndings(board *common.Board) []common.Player
+	HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool
 	Interrupt()
-	PreloadCache(board *Board)
+	PreloadCache(board *common.Board)
 	SaveCache()
 	ContextVars() log.Ctx
 }
@@ -34,7 +34,7 @@ type MoveSolver struct {
 
 const progressBarResolution = 1_000_000_000
 
-func NewMoveSolver(board *Board) *MoveSolver {
+func NewMoveSolver(board *common.Board) *MoveSolver {
 	movesOrder := CalculateMovesOrder(board)
 	cache := NewEndingCache(board.W, board.H)
 	log.Debug("Parameters set", log.Ctx{
@@ -57,7 +57,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 	}
 }
 
-func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
+func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player) {
 	defer func() {
 		if r := recover(); r != nil {
 			_, ok := r.(InterruptType)
@@ -72,7 +72,7 @@ func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
 	s.lastBoardPrintTime = time.Now()
 	s.startTime = time.Now()
 	s.iterations = 0
-	endings = make([]Player, board.W)
+	endings = make([]common.Player, board.W)
 	player := board.NextPlayer()
 
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
@@ -83,7 +83,7 @@ func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
 			ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
 			endings[move] = ending
 		} else {
-			endings[move] = NoMove
+			endings[move] = common.NoMove
 		}
 	}
 
@@ -94,13 +94,13 @@ const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
 
 // bestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) bestEndingOnMove(
-	board *Board,
-	player Player,
+	board *common.Board,
+	player common.Player,
 	move int,
 	progressStart float64,
 	progressEnd float64,
 	depth uint,
-) Player {
+) common.Player {
 	s.iterations++
 
 	y := board.Throw(move, player)
@@ -128,7 +128,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	nextPlayer := oppositePlayer(player)
 
 	// find further possible moves
-	var bestEnding Player = Empty // Tie as a default ending (when no more moves)
+	var bestEnding common.Player = common.Empty // Tie as a default ending (when no more moves)
 	endingProcessed := 0
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
@@ -142,7 +142,7 @@ func (s *MoveSolver) bestEndingOnMove(
 				return s.cache.Put(board, depth, moveEnding)
 			}
 			// player favors Tie over Lose
-			if endingProcessed == 0 || moveEnding == Empty {
+			if endingProcessed == 0 || moveEnding == common.Empty {
 				bestEnding = moveEnding
 			}
 			endingProcessed++
@@ -152,12 +152,12 @@ func (s *MoveSolver) bestEndingOnMove(
 	return s.cache.Put(board, depth, bestEnding)
 }
 
-func oppositePlayer(player Player) Player {
+func oppositePlayer(player common.Player) common.Player {
 	return 1 - player
 }
 
 func (s *MoveSolver) ReportStatus(
-	board *Board,
+	board *common.Board,
 	progressStart float64,
 	progressEnd float64,
 ) {
@@ -183,14 +183,14 @@ func (s *MoveSolver) ReportStatus(
 
 // BestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) BestEndingOnMove(
-	board *Board,
-	player Player,
+	board *common.Board,
+	player common.Player,
 	move int,
-) Player {
+) common.Player {
 	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
 }
 
-func CalculateMovesOrder(board *Board) []int {
+func CalculateMovesOrder(board *common.Board) []int {
 	movesOrder := []int{}
 	pivot := board.W / 2
 	for x := 0; x < board.W; x++ {
@@ -205,18 +205,18 @@ func CalculateMovesOrder(board *Board) []int {
 	return movesOrder
 }
 
-func EndingForPlayer(ending Player, player Player) GameEnding {
-	if ending == Empty {
-		return Tie
+func EndingForPlayer(ending common.Player, player common.Player) common.GameEnding {
+	if ending == common.Empty {
+		return common.Tie
 	}
 	if ending == player {
-		return Win
+		return common.Win
 	} else {
-		return Lose
+		return common.Lose
 	}
 }
 
-func (s *MoveSolver) PreloadCache(board *Board) {
+func (s *MoveSolver) PreloadCache(board *common.Board) {
 	cache, err := LoadCache(board)
 	if err != nil {
 		panic(errors.Wrap(err, "loading cache"))
@@ -244,6 +244,6 @@ func (s *MoveSolver) ContextVars() log.Ctx {
 	}
 }
 
-func (s *MoveSolver) HasPlayerWon(board *Board, move int, y int, player Player) bool {
+func (s *MoveSolver) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
 	return s.referee.HasPlayerWon(board, move, y, player)
 }

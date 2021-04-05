@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 	pb "github.com/igrek51/connect4solver/proto"
 )
 
@@ -33,7 +33,7 @@ func SaveCache(cache *EndingCache) error {
 	return nil
 }
 
-func LoadCache(board *Board) (*EndingCache, error) {
+func LoadCache(board *common.Board) (*EndingCache, error) {
 	filename := cacheFilename(board.W, board.H)
 	in, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -55,7 +55,7 @@ func LoadCache(board *Board) (*EndingCache, error) {
 	return cache, nil
 }
 
-func CacheFileExists(board *Board) bool {
+func CacheFileExists(board *common.Board) bool {
 	filename := cacheFilename(board.W, board.H)
 	_, err := os.Stat(filename)
 	return err == nil
@@ -83,7 +83,7 @@ func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCa
 	cache := NewEndingCache(boardW, boardH)
 	for d, depthCache := range dephtCaches.DepthCaches {
 		for k, v := range depthCache.Entries {
-			cache.depthCaches[d][k] = Player(v)
+			cache.depthCaches[d][k] = common.Player(v)
 		}
 		cache.cachedEntries += uint64(len(depthCache.Entries))
 	}
@@ -91,5 +91,5 @@ func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCa
 }
 
 func cacheFilename(boardW, boardH int) string {
-	return fmt.Sprintf("cache_%dx%d.protobuf", boardW, boardH)
+	return fmt.Sprintf("cache/cache_%dx%d.protobuf", boardW, boardH)
 }

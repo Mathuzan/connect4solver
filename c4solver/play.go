@@ -7,11 +7,11 @@ import (
 
 	log "github.com/igrek51/log15"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
 func Play(width, height, winStreak int, cacheEnabled bool) {
-	board := NewBoard(WithSize(width, height), WithWinStreak(winStreak))
+	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
 	var solver IMoveSolver = NewMoveSolver(board)
 
@@ -33,7 +33,7 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 		logger.Info("Board solved", solver.ContextVars())
 
 		if isATie(endings) {
-			log.Info(fmt.Sprintf("%v", Tie))
+			log.Info(fmt.Sprintf("%v", common.Tie))
 			break
 		}
 
@@ -51,31 +51,31 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 	}
 }
 
-func isATie(endings []Player) bool {
+func isATie(endings []common.Player) bool {
 	for _, e := range endings {
-		if e != NoMove {
+		if e != common.NoMove {
 			return false
 		}
 	}
 	return true
 }
 
-func printEndingsLine(endings []Player, player Player) {
+func printEndingsLine(endings []common.Player, player common.Player) {
 	displays := []string{}
 	for _, ending := range endings {
 		var display string
-		if ending == NoMove {
-			display = PlayerDisplays[NoMove]
+		if ending == common.NoMove {
+			display = common.PlayerDisplays[common.NoMove]
 		} else {
 			playerEnding := EndingForPlayer(ending, player)
-			display = ShortGameEndingDisplays[playerEnding]
+			display = common.ShortGameEndingDisplays[playerEnding]
 		}
 		displays = append(displays, display)
 	}
 	fmt.Println("| " + strings.Join(displays, " ") + " |")
 }
 
-func readNextMove(endings []Player, player Player) int {
+func readNextMove(endings []common.Player, player common.Player) int {
 	for {
 		var move int
 		fmt.Printf("Player %v moves [0-%d]: ", player, len(endings)-1)
@@ -88,7 +88,7 @@ func readNextMove(endings []Player, player Player) int {
 			log.Error("Move number is out of range")
 			continue
 		}
-		if endings[move] == NoMove {
+		if endings[move] == common.NoMove {
 			log.Error("Column is already full")
 			continue
 		}
