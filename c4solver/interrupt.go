@@ -4,8 +4,6 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/pkg/errors"
-
 	log "github.com/igrek51/log15"
 )
 
@@ -18,7 +16,3 @@ func HandleInterrupt(solver IMoveSolver) {
 		solver.Interrupt()
 	}()
 }
-
-type InterruptType error
-
-var InterruptError InterruptType = errors.New("Interrupt")

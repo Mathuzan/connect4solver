@@ -1,5 +1,9 @@
 package common
 
+import (
+	"github.com/pkg/errors"
+)
+
 type Player uint8
 
 const (
@@ -48,3 +52,7 @@ const (
 	TrainMode Mode = "train"
 	PlayMode  Mode = "play"
 )
+
+type InterruptType error
+
+var InterruptError InterruptType = errors.New("Interrupt")

@@ -60,7 +60,7 @@ func NewMoveSolver(board *common.Board) *MoveSolver {
 func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player) {
 	defer func() {
 		if r := recover(); r != nil {
-			_, ok := r.(InterruptType)
+			_, ok := r.(common.InterruptType)
 			if !ok {
 				panic(r)
 			}
@@ -117,7 +117,7 @@ func (s *MoveSolver) bestEndingOnMove(
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
 		if s.interrupt {
-			panic(InterruptError)
+			panic(common.InterruptError)
 		}
 	}
 

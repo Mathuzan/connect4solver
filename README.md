@@ -4,23 +4,22 @@ Connect 4 Game solver in Go. It finds winning strategy in "Connect Four" game (a
 ## Building & Running
 To build, run:
 ```bash
-go build -o c4solver
+./build.sh
 ```
-or run `./build.sh`
 
 Run training mode to evaluate cached results:
 ```bash
-./build.sh && ./c4solver --train --size 7x6
+./build.sh && ./c4s --train --size 7x6
 ```
 
 Start a game in playing mode:
 ```bash
-./build.sh && ./c4solver --play --size 7x6
+./build.sh && ./c4s --play --size 7x6
 ```
 
 See help for usage:
 ```bash
-./c4solver -h
+./c4s -h
 ```
 
 ## Testing
