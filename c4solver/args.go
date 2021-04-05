@@ -7,7 +7,7 @@ import (
 	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
-func GetArgs() (int, int, int, bool, bool, common.Mode) {
+func GetArgs() (int, int, int, bool, bool, common.Mode, bool, bool) {
 	boardWidth := flag.Int("width", 4, "board width")
 	boardHeight := flag.Int("height", 4, "board height")
 	winStreak := flag.Int("win", 4, "win streak")
@@ -15,6 +15,8 @@ func GetArgs() (int, int, int, bool, bool, common.Mode) {
 
 	profileEnabled := flag.Bool("profile", false, "Enable pprof CPU profiling")
 	cacheEnabled := flag.Bool("nocache", false, "Load cached endings from file")
+	hideA := flag.Bool("hidea", false, "Hide endings hints for player A")
+	hideB := flag.Bool("hideb", false, "Hide endings hints for player B")
 
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
@@ -33,5 +35,5 @@ func GetArgs() (int, int, int, bool, bool, common.Mode) {
 		mode = common.PlayMode
 	}
 
-	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, !*cacheEnabled, mode
+	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, !*cacheEnabled, mode, *hideA, *hideB
 }

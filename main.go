@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	width, height, winStreak, profileEnabled, cacheEnabled, mode := c4.GetArgs()
+	width, height, winStreak, profileEnabled, cacheEnabled, mode, hideA, hideB := c4.GetArgs()
 
 	if profileEnabled {
 		log.Info("Starting CPU profiler")
@@ -23,6 +23,6 @@ func main() {
 	if mode == common.TrainMode {
 		c4.Train(width, height, winStreak, cacheEnabled)
 	} else if mode == common.PlayMode {
-		c4.Play(width, height, winStreak, cacheEnabled)
+		c4.Play(width, height, winStreak, cacheEnabled, hideA, hideB)
 	}
 }

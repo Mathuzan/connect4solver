@@ -17,8 +17,8 @@ func SaveCache(cache *EndingCache) error {
 	maxDepth := int(cache.maxCacheDepth / 2)
 	filename := cacheFilename(cache.boardW, cache.boardH)
 
-	dephtCaches := cacheToProto(cache, maxDepth)
-	outBytes, err := proto.Marshal(dephtCaches)
+	protoCache, entriesLen := cacheToProto(cache, maxDepth)
+	outBytes, err := proto.Marshal(protoCache)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal cache to proto")
 	}
@@ -26,9 +26,10 @@ func SaveCache(cache *EndingCache) error {
 		return errors.Wrap(err, "failed to write to file")
 	}
 	log.Debug("Cache saved", log.Ctx{
-		"filename": filename,
-		"entries":  cache.Size(),
-		"maxDepth": maxDepth,
+		"filename":     filename,
+		"savedEntries": entriesLen,
+		"allEntries":   cache.Size(),
+		"maxDepth":     maxDepth,
 	})
 	return nil
 }
@@ -61,10 +62,11 @@ func CacheFileExists(board *common.Board) bool {
 	return err == nil
 }
 
-func cacheToProto(cache *EndingCache, maxDepth int) *pb.DepthCaches {
+func cacheToProto(cache *EndingCache, maxDepth int) (*pb.DepthCaches, uint64) {
 	dephtCaches := &pb.DepthCaches{
 		DepthCaches: make([]*pb.DepthCache, len(cache.depthCaches)),
 	}
+	entriesLen := uint64(0)
 	for d, depthCache := range cache.depthCaches {
 		if d <= maxDepth {
 			entriesMap := map[uint64]uint32{}
@@ -74,9 +76,10 @@ func cacheToProto(cache *EndingCache, maxDepth int) *pb.DepthCaches {
 			dephtCaches.DepthCaches[d] = &pb.DepthCache{
 				Entries: entriesMap,
 			}
+			entriesLen += uint64(len(depthCache))
 		}
 	}
-	return dephtCaches
+	return dephtCaches, entriesLen
 }
 
 func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCache {

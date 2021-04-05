@@ -3,6 +3,7 @@ package inline5x5
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	log "github.com/igrek51/log15"
 	"github.com/pkg/errors"
@@ -16,8 +17,8 @@ func SaveCache(cache *EndingCache) error {
 	maxDepth := int(cache.maxCacheDepth / 2)
 	filename := cacheFilename(cache.boardW, cache.boardH)
 
-	dephtCaches := cacheToProto(cache, maxDepth)
-	outBytes, err := proto.Marshal(dephtCaches)
+	protoCache, entriesLen := cacheToProto(cache, maxDepth)
+	outBytes, err := proto.Marshal(protoCache)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal cache to proto")
 	}
@@ -26,8 +27,10 @@ func SaveCache(cache *EndingCache) error {
 	}
 	log.Debug("Cache saved", log.Ctx{
 		"filename": filename,
-		"entries":  cache.Size(),
+		"entries":  entriesLen,
 		"maxDepth": maxDepth,
+		"cache0":   len(cache.depthCaches[0]),
+		"proto0":   len(protoCache.DepthCaches[0].Entries),
 	})
 	return nil
 }
@@ -54,10 +57,17 @@ func LoadCache(board *common.Board) (*EndingCache, error) {
 	return cache, nil
 }
 
-func cacheToProto(cache *EndingCache, maxDepth int) *pb.DepthCaches {
+func CacheFileExists(board *common.Board) bool {
+	filename := cacheFilename(board.W, board.H)
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
+func cacheToProto(cache *EndingCache, maxDepth int) (*pb.DepthCaches, uint64) {
 	dephtCaches := &pb.DepthCaches{
 		DepthCaches: make([]*pb.DepthCache, len(cache.depthCaches)),
 	}
+	entriesLen := uint64(0)
 	for d, depthCache := range cache.depthCaches {
 		if d <= maxDepth {
 			entriesMap := map[uint64]uint32{}
@@ -67,9 +77,10 @@ func cacheToProto(cache *EndingCache, maxDepth int) *pb.DepthCaches {
 			dephtCaches.DepthCaches[d] = &pb.DepthCache{
 				Entries: entriesMap,
 			}
+			entriesLen += uint64(len(depthCache))
 		}
 	}
-	return dephtCaches
+	return dephtCaches, entriesLen
 }
 
 func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCache {

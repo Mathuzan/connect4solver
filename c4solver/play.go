@@ -10,7 +10,7 @@ import (
 	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
-func Play(width, height, winStreak int, cacheEnabled bool) {
+func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
 	var solver IMoveSolver = NewMoveSolver(board)
@@ -39,7 +39,9 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 
 		player := board.NextPlayer()
 		fmt.Println(board.String())
-		printEndingsLine(endings, player)
+		if (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB) {
+			printEndingsLine(endings, player)
+		}
 
 		move := readNextMove(endings, player)
 
