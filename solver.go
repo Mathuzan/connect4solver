@@ -11,6 +11,7 @@ import (
 
 type IMoveSolver interface {
 	MovesEndings(board *Board) []Player
+	HasPlayerWon(board *Board, move int, y int, player Player) bool
 	Interrupt()
 	PreloadCache(board *Board)
 	SaveCache()
@@ -19,6 +20,7 @@ type IMoveSolver interface {
 
 type MoveSolver struct {
 	cache              *EndingCache
+	referee            *Referee
 	lastBoardPrintTime time.Time
 	startTime          time.Time
 	progressBar        *progressbar.ProgressBar
@@ -41,6 +43,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 		"maxCacheDepth":     cache.maxCacheDepth,
 		"maxCacheDepthSize": cache.maxCacheDepthSize,
 	})
+	referee := NewReferee(board)
 
 	return &MoveSolver{
 		cache:              cache,
@@ -48,6 +51,7 @@ func NewMoveSolver(board *Board) *MoveSolver {
 		startTime:          time.Now(),
 		progressBar:        progressbar.Default(progressBarResolution),
 		movesOrder:         movesOrder,
+		referee:            referee,
 	}
 }
 
@@ -63,6 +67,9 @@ func (s *MoveSolver) MovesEndings(board *Board) (endings []Player) {
 		}
 	}()
 
+	s.lastBoardPrintTime = time.Now()
+	s.startTime = time.Now()
+	s.iterations = 0
 	endings = make([]Player, board.w)
 	player := board.NextPlayer()
 
@@ -112,7 +119,7 @@ func (s *MoveSolver) bestEndingOnMove(
 		}
 	}
 
-	if board.referee.HasPlayerWon(board, move, y, player) {
+	if s.referee.HasPlayerWon(board, move, y, player) {
 		return player
 	}
 
@@ -233,4 +240,8 @@ func (s *MoveSolver) ContextVars() log.Ctx {
 		"cacheUsages": s.cache.cacheUsages,
 		"cacheClears": s.cache.clears,
 	}
+}
+
+func (s *MoveSolver) HasPlayerWon(board *Board, move int, y int, player Player) bool {
+	return s.referee.HasPlayerWon(board, move, y, player)
 }

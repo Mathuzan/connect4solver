@@ -8,7 +8,8 @@ import (
 
 func TestNobodyWon(t *testing.T) {
 	board := NewBoard(WithSize(7, 6))
-	assert.EqualValues(t, Empty, board.HasWinner())
+	referee := NewReferee(board)
+	assert.EqualValues(t, Empty, referee.HasWinner(board))
 
 	board = ParseBoard(`
 	. . . . . . .
@@ -18,8 +19,8 @@ func TestNobodyWon(t *testing.T) {
 	. B . B A . A
 	. A . A B . B
 	`)
-	referee := NewReferee(board)
-	assert.EqualValues(t, Empty, board.HasWinner())
+	referee = NewReferee(board)
+	assert.EqualValues(t, Empty, referee.HasWinner(board))
 	assert.EqualValues(t, false, referee.HasPlayerWon(board, 1, 2, PlayerA))
 	assert.EqualValues(t, false, referee.HasPlayerWon(board, 6, 3, PlayerB))
 }
@@ -34,7 +35,7 @@ func TestWonVertical(t *testing.T) {
 	. A . A . . A
 	`)
 	referee := NewReferee(board)
-	assert.EqualValues(t, PlayerA, board.HasWinner())
+	assert.EqualValues(t, PlayerA, referee.HasWinner(board))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 6, 3, PlayerA))
 }
 
@@ -48,7 +49,7 @@ func TestWonHorizontal(t *testing.T) {
 	A A . A B B A
 	`)
 	referee := NewReferee(board)
-	winner := board.HasWinner()
+	winner := referee.HasWinner(board)
 	assert.EqualValues(t, PlayerB, winner)
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 3, 1, PlayerB))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 4, 1, PlayerB))
@@ -68,7 +69,7 @@ func TestWonDiagonal(t *testing.T) {
 	A A . A B B A
 	`)
 	referee := NewReferee(board)
-	assert.EqualValues(t, PlayerA, board.HasWinner())
+	assert.EqualValues(t, PlayerA, referee.HasWinner(board))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 3, 0, PlayerA))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 4, 1, PlayerA))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 5, 2, PlayerA))
@@ -82,7 +83,7 @@ func TestWonDiagonal(t *testing.T) {
 	. B A B A B B
 	A B A A B B A
 	`)
-	assert.EqualValues(t, PlayerB, board.HasWinner())
+	assert.EqualValues(t, PlayerB, referee.HasWinner(board))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 1, 3, PlayerB))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 2, 2, PlayerB))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 3, 1, PlayerB))
@@ -96,7 +97,7 @@ func TestWonDiagonal(t *testing.T) {
 	A A A B . B .
 	A A B A . B A
 	`)
-	assert.EqualValues(t, PlayerB, board.HasWinner())
+	assert.EqualValues(t, PlayerB, referee.HasWinner(board))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 0, 2, PlayerB))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 1, 3, PlayerB))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 2, 4, PlayerB))
@@ -110,7 +111,7 @@ func TestMinStreakCondition(t *testing.T) {
 AAB
 `, WithWinStreak(2))
 	referee := NewReferee(board)
-	assert.EqualValues(t, PlayerA, board.HasWinner())
+	assert.EqualValues(t, PlayerA, referee.HasWinner(board))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 0, 0, PlayerA))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 1, 0, PlayerA))
 	assert.EqualValues(t, true, referee.HasPlayerWon(board, 1, 1, PlayerA))

@@ -90,5 +90,5 @@ func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCa
 }
 
 func cacheFilename(boardW, boardH int) string {
-	return fmt.Sprintf("cache_%dx%d.bin", boardW, boardH)
+	return fmt.Sprintf("cache_%dx%d.protobuf", boardW, boardH)
 }

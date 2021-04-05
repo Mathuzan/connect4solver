@@ -12,8 +12,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	fmt.Println(board.String())
 
 	log.Debug("Finding moves results...")
-	var solver IMoveSolver = NewMoveSolver(board)
-	HandleInterrupt(solver)
+	solver := createSolver(board)
 
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
@@ -47,4 +46,16 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	log.Info("Done", log.Ctx{
 		"totalTime": totalElapsed,
 	})
+}
+
+func createSolver(board *Board) IMoveSolver {
+	var solver IMoveSolver
+	if board.w == 5 && board.h == 5 {
+		// solver = inline5x5.NewMoveSolver(board)
+		solver = NewMoveSolver(board)
+	} else {
+		solver = NewMoveSolver(board)
+	}
+	HandleInterrupt(solver)
+	return solver
 }

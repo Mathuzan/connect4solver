@@ -42,7 +42,7 @@ func Play(width, height, winStreak int, cacheEnabled bool) {
 		move := readNextMove(endings, player)
 
 		moveY := board.Throw(move, player)
-		if board.referee.HasPlayerWon(board, move, moveY, player) {
+		if solver.HasPlayerWon(board, move, moveY, player) {
 			log.Info(fmt.Sprintf("Player %v won", player))
 			break
 		}

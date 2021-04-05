@@ -16,8 +16,6 @@ type Board struct {
 	h         int
 	winStreak int
 	state     BoardKey
-
-	referee *Referee
 }
 
 type BoardKey [7]uint64
@@ -43,7 +41,6 @@ func NewBoard(options ...Option) *Board {
 	for x := 0; x < b.w; x++ {
 		b.state[x] = 0b1
 	}
-	b.referee = NewReferee(b)
 	return b
 }
 
@@ -126,10 +123,6 @@ func (b *Board) String() string {
 	return strings.Join(lines, "\n")
 }
 
-func (b *Board) HasWinner() Player {
-	return b.referee.HasWinner(b)
-}
-
 func (b *Board) NextPlayer() Player {
 	tokensA := 0
 	tokensB := 0
@@ -165,7 +158,6 @@ func (b *Board) Clone() *Board {
 		h:         b.h,
 		winStreak: b.winStreak,
 		state:     state,
-		referee:   b.referee,
 	}
 }
 
