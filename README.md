@@ -8,12 +8,12 @@ go build -o c4solver
 ```
 or run `./build.sh`
 
-Run training mode:
+Run training mode to evaluate cached results:
 ```bash
 ./build.sh && ./c4solver --train --size 7x6
 ```
 
-Run playing a game mode:
+Start a game in playing mode:
 ```bash
 ./build.sh && ./c4solver --play --size 7x6
 ```
@@ -25,12 +25,12 @@ See help for usage:
 
 ## Testing
 ```bash
-go test .
+go test ./...
 ```
 
 ## Run benchmarks
 ```bash
-go test --bench=.
+go test --bench=. ./...
 ```
 
 ## Profiling

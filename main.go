@@ -5,10 +5,13 @@ import (
 	"runtime/pprof"
 
 	log "github.com/igrek51/log15"
+
+	c4 "github.com/igrek51/connect4solver/c4solver"
+	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
 func main() {
-	width, height, winStreak, profileEnabled, cacheEnabled, mode := getArgs()
+	width, height, winStreak, profileEnabled, cacheEnabled, mode := c4.GetArgs()
 
 	if profileEnabled {
 		log.Info("Starting CPU profiler")
@@ -17,9 +20,9 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if mode == TrainMode {
-		Train(width, height, winStreak, cacheEnabled)
-	} else if mode == PlayMode {
-		Play(width, height, winStreak, cacheEnabled)
+	if mode == common.TrainMode {
+		c4.Train(width, height, winStreak, cacheEnabled)
+	} else if mode == common.PlayMode {
+		c4.Play(width, height, winStreak, cacheEnabled)
 	}
 }
