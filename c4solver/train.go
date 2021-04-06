@@ -7,7 +7,6 @@ import (
 	log "github.com/igrek51/log15"
 
 	"github.com/igrek51/connect4solver/c4solver/common"
-	"github.com/igrek51/connect4solver/c4solver/inline5x5"
 )
 
 func Train(width, height, winStreak int, cacheEnabled bool) {
@@ -52,12 +51,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 }
 
 func createSolver(board *common.Board) IMoveSolver {
-	var solver IMoveSolver
-	if board.W == 5 && board.H == 5 {
-		solver = inline5x5.NewMoveSolver(board)
-	} else {
-		solver = NewMoveSolver(board)
-	}
+	var solver IMoveSolver = NewMoveSolver(board)
 	HandleInterrupt(solver)
 	return solver
 }

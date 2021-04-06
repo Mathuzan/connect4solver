@@ -1,6 +1,7 @@
 package c4solver
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/igrek51/connect4solver/c4solver/common"
@@ -68,6 +69,27 @@ func TestBestResult2x2Unfair(t *testing.T) {
 
 	assert.Equal(t, []Player{PlayerA, PlayerA},
 		endings)
+}
+
+func TestCachedResultsCount(t *testing.T) {
+	board := NewBoard(WithSize(3, 2), WithWinStreak(3))
+	solver := NewMoveSolver(board)
+
+	endings := solver.MovesEndings(board)
+	assert.Equal(t, []Player{Empty, Empty, Empty}, endings)
+
+	depth := 1
+	fmt.Printf("cached boards for depth: %d, len: %d\n", depth, len(solver.cache.depthCaches[depth]))
+	for key := range solver.cache.depthCaches[depth] {
+		var state BoardKey
+		state[0] = uint64(uint8(key))
+		state[1] = uint64(uint8(key >> 8))
+		state[2] = uint64(uint8(key >> 16))
+		board.State = state
+		fmt.Println(board.String())
+	}
+	assert.Equal(t, 2, len(solver.cache.depthCaches[0]))
+	assert.Equal(t, 5, len(solver.cache.depthCaches[1]))
 }
 
 func BenchmarkMoveSolver4x4(b *testing.B) {

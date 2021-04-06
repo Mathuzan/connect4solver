@@ -143,6 +143,19 @@ func (b *Board) NextPlayer() Player {
 	}
 }
 
+func (b *Board) CountMoves() uint {
+	tokens := uint(0)
+	for x := 0; x < b.W; x++ {
+		for y := 0; y < b.StackSize(x); y++ {
+			cell := b.GetCell(x, y)
+			if cell == PlayerA || cell == PlayerB {
+				tokens++
+			}
+		}
+	}
+	return tokens
+}
+
 func (b *Board) CanMakeMove(x int) bool {
 	return b.State[x]>>b.H == 0
 }

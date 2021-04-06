@@ -74,13 +74,14 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 	s.iterations = 0
 	endings = make([]common.Player, board.W)
 	player := board.NextPlayer()
+	depth := board.CountMoves()
 
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		move := s.movesOrder[moveIndex]
 		progressStart := float64(moveIndex) / float64(board.W)
 		progressEnd := float64(moveIndex+1) / float64(board.W)
 		if board.CanMakeMove(move) {
-			ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, 0)
+			ending := s.bestEndingOnMove(board.Clone(), player, move, progressStart, progressEnd, depth)
 			endings[move] = ending
 		} else {
 			endings[move] = common.NoMove

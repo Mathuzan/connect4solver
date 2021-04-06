@@ -31,6 +31,7 @@ func SaveCache(cache *EndingCache) error {
 		"allEntries":   cache.Size(),
 		"maxDepth":     maxDepth,
 	})
+
 	return nil
 }
 
@@ -52,6 +53,13 @@ func LoadCache(board *common.Board) (*EndingCache, error) {
 		"entries":  cache.Size(),
 		"maxDepth": cache.HighestDepth(),
 	})
+
+	// for d, depthCache := range cache.depthCaches {
+	// 	log.Debug("depth cache size", log.Ctx{
+	// 		"depth": d,
+	// 		"size":  len(depthCache),
+	// 	})
+	// }
 
 	return cache, nil
 }

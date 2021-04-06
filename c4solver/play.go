@@ -14,7 +14,6 @@ func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
 	var solver IMoveSolver = NewMoveSolver(board)
-
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
@@ -47,6 +46,7 @@ func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
 
 		moveY := board.Throw(move, player)
 		if solver.HasPlayerWon(board, move, moveY, player) {
+			fmt.Println(board.String())
 			log.Info(fmt.Sprintf("Player %v won", player))
 			break
 		}
