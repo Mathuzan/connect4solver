@@ -7,16 +7,31 @@ import (
 	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
-func GetArgs() (int, int, int, bool, bool, common.Mode, bool, bool) {
-	boardWidth := flag.Int("width", 4, "board width")
-	boardHeight := flag.Int("height", 4, "board height")
-	winStreak := flag.Int("win", 4, "win streak")
-	boardSize := flag.String("size", "", "board size (7x6)")
+type CliArgs struct {
+	Width     int
+	Height    int
+	WinStreak int
 
-	profileEnabled := flag.Bool("profile", false, "Enable pprof CPU profiling")
-	cacheEnabled := flag.Bool("nocache", false, "Load cached endings from file")
-	hideA := flag.Bool("hidea", false, "Hide endings hints for player A")
-	hideB := flag.Bool("hideb", false, "Hide endings hints for player B")
+	Profile bool
+	Cache   bool
+	HideA   bool
+	HideB   bool
+
+	Mode common.Mode
+}
+
+func GetArgs() *CliArgs {
+	args := &CliArgs{}
+
+	flag.IntVar(&args.Width, "width", 7, "board width")
+	flag.IntVar(&args.Height, "height", 6, "board height")
+	flag.IntVar(&args.WinStreak, "win", 4, "win streak")
+	boardSize := flag.String("size", "", "board size (eg. 7x6)")
+
+	flag.BoolVar(&args.Profile, "profile", false, "Enable pprof CPU profiling")
+	nocache := flag.Bool("nocache", false, "Load cached endings from file")
+	flag.BoolVar(&args.HideA, "hidea", false, "Hide endings hints for player A")
+	flag.BoolVar(&args.HideB, "hideb", false, "Hide endings hints for player B")
 
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
@@ -24,16 +39,18 @@ func GetArgs() (int, int, int, bool, bool, common.Mode, bool, bool) {
 	flag.Parse()
 
 	if boardSize != nil && *boardSize != "" {
-		fmt.Sscanf(*boardSize, "%dx%d", boardWidth, boardHeight)
+		fmt.Sscanf(*boardSize, "%dx%d", &args.Width, &args.Height)
 	}
 
-	mode := common.TrainMode
+	args.Cache = !*nocache
+
+	args.Mode = common.TrainMode
 	if *train {
-		mode = common.TrainMode
+		args.Mode = common.TrainMode
 	}
 	if *play {
-		mode = common.PlayMode
+		args.Mode = common.PlayMode
 	}
 
-	return *boardWidth, *boardHeight, *winStreak, *profileEnabled, !*cacheEnabled, mode, *hideA, *hideB
+	return args
 }

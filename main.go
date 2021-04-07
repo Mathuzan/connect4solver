@@ -11,18 +11,18 @@ import (
 )
 
 func main() {
-	width, height, winStreak, profileEnabled, cacheEnabled, mode, hideA, hideB := c4.GetArgs()
+	args := c4.GetArgs()
 
-	if profileEnabled {
+	if args.Profile {
 		log.Info("Starting CPU profiler")
 		cpuProfile, _ := os.Create("cpuprof.prof")
 		pprof.StartCPUProfile(cpuProfile)
 		defer pprof.StopCPUProfile()
 	}
 
-	if mode == common.TrainMode {
-		c4.Train(width, height, winStreak, cacheEnabled)
-	} else if mode == common.PlayMode {
-		c4.Play(width, height, winStreak, cacheEnabled, hideA, hideB)
+	if args.Mode == common.TrainMode {
+		c4.Train(args.Width, args.Height, args.WinStreak, args.Cache)
+	} else if args.Mode == common.PlayMode {
+		c4.Play(args.Width, args.Height, args.WinStreak, args.Cache, args.HideA, args.HideB)
 	}
 }
