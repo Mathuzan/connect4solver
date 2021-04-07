@@ -2,8 +2,9 @@
 Connect 4 Game solver in Go. It finds winning strategy in "Connect Four" game (also known as "Four in a row")
 
 ## Building & Running
-To build, run:
+To build, install Go and run:
 ```bash
+go mod download
 ./build.sh
 ```
 
