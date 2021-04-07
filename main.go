@@ -23,6 +23,7 @@ func main() {
 	if args.Mode == common.TrainMode {
 		c4.Train(args.Width, args.Height, args.WinStreak, args.Cache)
 	} else if args.Mode == common.PlayMode {
-		c4.Play(args.Width, args.Height, args.WinStreak, args.Cache, args.HideA, args.HideB)
+		c4.Play(args.Width, args.Height, args.WinStreak, args.Cache, args.HideA, args.HideB,
+			args.AutoAttackA, args.AutoAttackB, args.Scores)
 	}
 }

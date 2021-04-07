@@ -2,6 +2,7 @@ package c4solver
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -10,7 +11,14 @@ import (
 	"github.com/igrek51/connect4solver/c4solver/common"
 )
 
-func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
+func Play(
+	width, height, winStreak int,
+	cacheEnabled, hideA, hideB,
+	autoAttackA, autoAttackB,
+	scoresEnabled bool,
+) {
+	rand.Seed(time.Now().UnixNano())
+
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
 	var solver IMoveSolver = NewMoveSolver(board)
@@ -21,6 +29,8 @@ func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
 	for {
 		startTime := time.Now()
 		endings := solver.MovesEndings(board)
+		player := board.NextPlayer()
+		scores := estimateMoveScores(solver, endings, player, board, scoresEnabled)
 		totalElapsed := time.Since(startTime)
 
 		logger := log.New(log.Ctx{
@@ -31,31 +41,41 @@ func Play(width, height, winStreak int, cacheEnabled bool, hideA, hideB bool) {
 		})
 		logger.Info("Board solved", solver.ContextVars())
 
-		if isATie(endings) {
-			log.Info(fmt.Sprintf("%v", common.Tie))
-			break
-		}
-
-		player := board.NextPlayer()
 		fmt.Println(board.String())
-		if (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB) {
+		showHints := (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB)
+		if showHints {
 			printEndingsLine(endings, player)
+			if scoresEnabled {
+				log.Info("Moves scores", log.Ctx{"scores": scores})
+			}
 		}
+		bestMove := findBestMove(scores)
 
-		move := readNextMove(endings, player)
+		var move int
+		if (player == common.PlayerA && autoAttackA) || (player == common.PlayerB && autoAttackB) {
+			move = bestMove
+		} else {
+			move = readNextMove(endings, player, bestMove, showHints)
+		}
 
 		moveY := board.Throw(move, player)
 		if solver.HasPlayerWon(board, move, moveY, player) {
+			depth := board.CountMoves()
 			fmt.Println(board.String())
-			log.Info(fmt.Sprintf("Player %v won", player))
+			log.Info(fmt.Sprintf("Player %v won in %d moves", player, depth))
+			break
+		} else if isATie(board) {
+			depth := board.CountMoves()
+			fmt.Println(board.String())
+			log.Info(fmt.Sprintf("%v in %d moves", common.Tie, depth))
 			break
 		}
 	}
 }
 
-func isATie(endings []common.Player) bool {
-	for _, e := range endings {
-		if e != common.NoMove {
+func isATie(board *common.Board) bool {
+	for x := 0; x < board.W; x++ {
+		if board.CanMakeMove(x) {
 			return false
 		}
 	}
@@ -77,10 +97,17 @@ func printEndingsLine(endings []common.Player, player common.Player) {
 	fmt.Println("| " + strings.Join(displays, " ") + " |")
 }
 
-func readNextMove(endings []common.Player, player common.Player) int {
+func readNextMove(
+	endings []common.Player, player common.Player,
+	bestMove int, showBest bool,
+) int {
 	for {
 		var move int
-		fmt.Printf("Player %v moves [0-%d]: ", player, len(endings)-1)
+		bestStr := ""
+		if showBest {
+			bestStr = fmt.Sprintf(" (Best: %d)", bestMove)
+		}
+		fmt.Printf("Player %v moves [0-%d]%s: ", player, len(endings)-1, bestStr)
 		_, err := fmt.Scanf("%d", &move)
 		if err != nil {
 			log.Error("Invalid number", log.Ctx{"error": err})
@@ -96,4 +123,67 @@ func readNextMove(endings []common.Player, player common.Player) int {
 		}
 		return move
 	}
+}
+
+func estimateMoveScores(
+	solver IMoveSolver, endings []common.Player,
+	player common.Player, board *common.Board, scoresEnabled bool,
+) []int {
+	scores := make([]int, len(endings))
+	opponent := oppositePlayer(player)
+	if !scoresEnabled {
+		for move, ending := range endings {
+			if ending == player {
+				scores[move] = 10
+			} else if ending == opponent {
+				scores[move] = -10
+			} else if ending == common.NoMove {
+				scores[move] = -1000
+			}
+		}
+		return scores
+	}
+
+	for move, ending := range endings {
+		moveY := board.Throw(move, player)
+		score := 0
+
+		if ending == common.NoMove {
+			score = -1000
+		} else if solver.HasPlayerWon(board, move, moveY, player) {
+			score = 100
+		} else if solver.HasPlayerWon(board, move, moveY, opponent) {
+			score = -100
+		} else {
+			if ending == player {
+				score += 10
+			} else if ending == opponent {
+				score -= 10
+			}
+			nextEndings := solver.MovesEndings(board)
+			for _, nextEnding := range nextEndings {
+				if nextEnding == player {
+					score++
+				} else if nextEnding == opponent {
+					score--
+				}
+			}
+		}
+
+		scores[move] = score
+		board.Revert(move, moveY)
+	}
+
+	return scores
+}
+
+func findBestMove(scores []int) int {
+	order := rand.Perm(len(scores)) // get random if there are many maximum values
+	maxi := order[0]
+	for _, move := range order {
+		if scores[move] > scores[maxi] {
+			maxi = move
+		}
+	}
+	return maxi
 }

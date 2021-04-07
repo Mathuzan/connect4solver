@@ -12,12 +12,15 @@ type CliArgs struct {
 	Height    int
 	WinStreak int
 
-	Profile bool
-	Cache   bool
-	HideA   bool
-	HideB   bool
-
 	Mode common.Mode
+
+	Profile     bool
+	Cache       bool
+	HideA       bool
+	HideB       bool
+	AutoAttackA bool
+	AutoAttackB bool
+	Scores      bool
 }
 
 func GetArgs() *CliArgs {
@@ -30,8 +33,11 @@ func GetArgs() *CliArgs {
 
 	flag.BoolVar(&args.Profile, "profile", false, "Enable pprof CPU profiling")
 	nocache := flag.Bool("nocache", false, "Load cached endings from file")
-	flag.BoolVar(&args.HideA, "hidea", false, "Hide endings hints for player A")
-	flag.BoolVar(&args.HideB, "hideb", false, "Hide endings hints for player B")
+	flag.BoolVar(&args.HideA, "hide-a", false, "Hide endings hints for player A")
+	flag.BoolVar(&args.HideB, "hide-b", false, "Hide endings hints for player B")
+	flag.BoolVar(&args.AutoAttackA, "autoattack-a", false, "Make player A move automatically")
+	flag.BoolVar(&args.AutoAttackB, "autoattack-b", false, "Make player B move automatically")
+	flag.BoolVar(&args.Scores, "scores", false, "Show scores of each move")
 
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
