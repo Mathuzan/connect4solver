@@ -36,7 +36,7 @@ func Play(
 		logger := log.New(log.Ctx{
 			"solveTime": totalElapsed,
 		})
-		logger.Info("Board solved", solver.ContextVars())
+		logger.Info("Board solved", solver.SummaryVars())
 
 		fmt.Println(board.String())
 		showHints := (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB)

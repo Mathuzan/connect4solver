@@ -17,7 +17,7 @@ type IMoveSolver interface {
 	Interrupt()
 	PreloadCache(board *common.Board)
 	SaveCache()
-	ContextVars() log.Ctx
+	SummaryVars() log.Ctx
 }
 
 type MoveSolver struct {
@@ -157,31 +157,6 @@ func oppositePlayer(player common.Player) common.Player {
 	return 1 - player
 }
 
-func (s *MoveSolver) ReportStatus(
-	board *common.Board,
-	progressStart float64,
-	progressEnd float64,
-) {
-	duration := time.Since(s.startTime)
-	var eta time.Duration
-	if progressStart > 0 && duration > 0 {
-		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
-	}
-
-	log.Debug("Currently considered board", log.Ctx{
-		"cacheSize":   s.cache.Size(),
-		"iterations":  s.iterations,
-		"cacheUsages": s.cache.cacheUsages,
-		"progress":    progressStart,
-		"cacheClears": s.cache.clears,
-		"eta":         eta,
-	})
-	fmt.Println(board.String())
-	if s.progressBar != nil {
-		s.progressBar.Set(int(progressStart * progressBarResolution))
-	}
-}
-
 // BestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) BestEndingOnMove(
 	board *common.Board,
@@ -189,6 +164,10 @@ func (s *MoveSolver) BestEndingOnMove(
 	move int,
 ) common.Player {
 	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
+}
+
+func (s *MoveSolver) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
+	return s.referee.HasPlayerWon(board, move, y, player)
 }
 
 func CalculateMovesOrder(board *common.Board) []int {
@@ -236,15 +215,47 @@ func (s *MoveSolver) Interrupt() {
 	s.interrupt = true
 }
 
-func (s *MoveSolver) ContextVars() log.Ctx {
-	return log.Ctx{
-		"cacheSize":   s.cache.Size(),
-		"iterations":  s.iterations,
-		"cacheUsages": s.cache.cacheUsages,
-		"cacheClears": s.cache.clears,
+func (s *MoveSolver) ReportStatus(
+	board *common.Board,
+	progressStart float64,
+	progressEnd float64,
+) {
+	duration := time.Since(s.startTime)
+	var eta time.Duration
+	if progressStart > 0 && duration > 0 {
+		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
+	}
+
+	log.Debug("Currently considered board", log.Ctx{
+		"cacheSize":         common.BigintSeparated(s.cache.Size()),
+		"iterations":        common.BigintSeparated(s.iterations),
+		"cacheClears":       common.BigintSeparated(s.cache.clears),
+		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
+		"progress":          fmt.Sprintf("%v", progressStart),
+		"eta":               eta,
+	})
+	fmt.Println(board.String())
+	if s.progressBar != nil {
+		s.progressBar.Set(int(progressStart * progressBarResolution))
 	}
 }
 
-func (s *MoveSolver) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
-	return s.referee.HasPlayerWon(board, move, y, player)
+func (s *MoveSolver) SummaryVars() log.Ctx {
+	return log.Ctx{
+		"cacheSize":   common.BigintSeparated(s.cache.Size()),
+		"iterations":  common.BigintSeparated(s.iterations),
+		"cacheClears": common.BigintSeparated(s.cache.clears),
+	}
+}
+
+func maximumZeroIndex(nums []uint64) int {
+	maxi := -1
+	for i, num := range nums {
+		if num == 0 {
+			maxi = i
+		} else {
+			break
+		}
+	}
+	return maxi
 }

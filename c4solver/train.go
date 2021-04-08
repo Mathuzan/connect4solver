@@ -30,7 +30,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 		"boardHeight": height,
 		"winStreak":   winStreak,
 	})
-	logger.Info("Board solved", solver.ContextVars())
+	logger.Info("Board solved", solver.SummaryVars())
 
 	player := board.NextPlayer()
 	for move, ending := range endings {

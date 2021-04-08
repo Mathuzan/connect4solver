@@ -12,7 +12,7 @@ func HandleInterrupt(solver IMoveSolver) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		log.Debug("Signal Interrupt")
+		log.Debug("Signal Interrupt - shutting down")
 		solver.Interrupt()
 	}()
 }
