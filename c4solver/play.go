@@ -34,10 +34,7 @@ func Play(
 		totalElapsed := time.Since(startTime)
 
 		logger := log.New(log.Ctx{
-			"solveTime":   totalElapsed,
-			"boardWidth":  width,
-			"boardHeight": height,
-			"winStreak":   winStreak,
+			"solveTime": totalElapsed,
 		})
 		logger.Info("Board solved", solver.ContextVars())
 
@@ -46,7 +43,7 @@ func Play(
 		if showHints {
 			printEndingsLine(endings, player)
 			if scoresEnabled {
-				log.Info("Moves scores", log.Ctx{"scores": scores})
+				log.Info("Estimated move scores", log.Ctx{"scores": scores})
 			}
 		}
 		bestMove := findBestMove(scores)
