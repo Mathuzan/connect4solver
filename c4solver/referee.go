@@ -76,7 +76,7 @@ func (s *Referee) HasPlayerWonDiagonal(board *common.Board, startX int, startY i
 	var binaryRow uint64
 	y := startY - s.winStreak1
 	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
-		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
+		if x >= 0 && x < s.w && y >= 0 && y < s.h {
 			if board.GetCell(x, y) == player {
 				binaryRow |= 1 << x
 			}
@@ -90,7 +90,7 @@ func (s *Referee) HasPlayerWonDiagonalCounter(board *common.Board, startX int, s
 	var binaryRow uint64
 	y := startY + s.winStreak1
 	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
-		if x >= 0 && x < s.w && y >= 0 && y <= s.h {
+		if x >= 0 && x < s.w && y >= 0 && y < s.h {
 			if board.GetCell(x, y) == player {
 				binaryRow |= 1 << x
 			}
