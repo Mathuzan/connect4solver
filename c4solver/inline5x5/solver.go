@@ -28,7 +28,7 @@ const progressBarResolution = 1_000_000_000
 func NewMoveSolver(board *common.Board) *MoveSolver {
 	movesOrder := CalculateMovesOrder(board)
 	cache := NewEndingCache(board.W, board.H)
-	log.Debug("Move solver ready", log.Ctx{
+	log.Debug("Solver configured", log.Ctx{
 		"boardWidth":        board.W,
 		"boardHeight":       board.H,
 		"winStreak":         board.WinStreak,
