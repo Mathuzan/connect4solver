@@ -17,6 +17,9 @@ func SaveCache(cache *EndingCache) error {
 	maxDepth := int(cache.maxCacheDepth / 2)
 	filename := cacheFilename(cache.boardW, cache.boardH)
 
+	log.Debug("Saving cache...", log.Ctx{
+		"filename": filename,
+	})
 	protoCache, entriesLen := cacheToProto(cache, maxDepth)
 	outBytes, err := proto.Marshal(protoCache)
 	if err != nil {
@@ -37,6 +40,9 @@ func SaveCache(cache *EndingCache) error {
 
 func LoadCache(board *common.Board) (*EndingCache, error) {
 	filename := cacheFilename(board.W, board.H)
+	log.Debug("Loading cache...", log.Ctx{
+		"filename": filename,
+	})
 	in, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "error reading file")
