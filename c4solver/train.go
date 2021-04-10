@@ -15,7 +15,6 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 	fmt.Println(board.String())
 
-	log.Debug("Finding moves results...")
 	solver := createSolver(board)
 
 	if cacheEnabled && CacheFileExists(board) {

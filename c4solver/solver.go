@@ -37,7 +37,7 @@ const progressBarResolution = 1_000_000_000
 func NewMoveSolver(board *common.Board) *MoveSolver {
 	movesOrder := CalculateMovesOrder(board)
 	cache := NewEndingCache(board.W, board.H)
-	log.Debug("Parameters set", log.Ctx{
+	log.Debug("Move solver ready", log.Ctx{
 		"boardWidth":        board.W,
 		"boardHeight":       board.H,
 		"winStreak":         board.WinStreak,
@@ -225,6 +225,7 @@ func (s *MoveSolver) ReportStatus(
 	if progressStart > 0 && duration > 0 {
 		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
 	}
+	iterationsPerSec := common.BigintSeparated(s.iterations * uint64(time.Second) / uint64(duration))
 
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize":         common.BigintSeparated(s.cache.Size()),
@@ -233,6 +234,7 @@ func (s *MoveSolver) ReportStatus(
 		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
 		"progress":          fmt.Sprintf("%v", progressStart),
 		"eta":               eta,
+		"ips":               iterationsPerSec,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
