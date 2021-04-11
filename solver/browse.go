@@ -18,11 +18,11 @@ func Browse(
 	cacheEnabled bool,
 ) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
+
 	var solver *MoveSolver = NewMoveSolver(board)
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
-	common.HandleInterrupt(solver)
 
 	for {
 		fmt.Println(board.String())
@@ -59,9 +59,6 @@ func Browse(
 			solver.cache.ClearCache(uint(x))
 		} else if action == "endings" {
 			startTime := time.Now()
-			if solver.interrupt {
-				common.HandleInterrupt(solver)
-			}
 			endings := solver.MovesEndings(board)
 			totalElapsed := time.Since(startTime)
 			logger := log.New(log.Ctx{

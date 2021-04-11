@@ -17,7 +17,6 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
-	common.HandleInterrupt(solver)
 
 	startTime := time.Now()
 	endings := solver.MovesEndings(board)

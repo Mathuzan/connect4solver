@@ -28,6 +28,7 @@ func Play(
 
 	for {
 		startTime := time.Now()
+
 		endings := solver.MovesEndings(board)
 		player := board.NextPlayer()
 		scores := estimateMoveScores(solver, endings, player, board, scoresEnabled)

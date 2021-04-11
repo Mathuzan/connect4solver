@@ -12,16 +12,20 @@ import (
 )
 
 type MoveSolver struct {
-	cache              *EndingCache
-	referee            *Referee
-	lastBoardPrintTime time.Time
-	startTime          time.Time
-	progressBar        *progressbar.ProgressBar
+	cache      *EndingCache
+	referee    *Referee
+	movesOrder []int
+	interrupt  bool
 
-	iterations     uint64
-	lastIterations uint64
-	movesOrder     []int
-	interrupt      bool
+	startTime          time.Time
+	lastBoardPrintTime time.Time
+	lastProgressTime   time.Time
+	lastProgress       float64
+	firstProgress      float64
+	etaInst            time.Duration
+	progressBar        *progressbar.ProgressBar
+	iterations         uint64
+	lastIterations     uint64
 }
 
 const progressBarResolution = 1_000_000_000
@@ -48,6 +52,7 @@ func NewMoveSolver(board *common.Board) *MoveSolver {
 		progressBar:        progressbar.Default(progressBarResolution),
 		movesOrder:         movesOrder,
 		referee:            referee,
+		interrupt:          true,
 	}
 }
 
@@ -62,9 +67,16 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 			endings = nil
 		}
 	}()
+	if s.interrupt {
+		common.HandleInterrupt(s)
+	}
 
-	s.lastBoardPrintTime = time.Now()
 	s.startTime = time.Now()
+	s.lastBoardPrintTime = time.Now()
+	s.lastProgressTime = time.Now()
+	s.etaInst = 0
+	s.firstProgress = 0
+	s.lastProgress = 0
 	s.iterations = 0
 	s.interrupt = false
 	endings = make([]common.Player, board.W)
@@ -110,7 +122,6 @@ func (s *MoveSolver) bestEndingOnMove(
 
 	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= refreshProgressPeriod {
 		s.ReportStatus(board, progressStart, progressEnd)
-		s.lastBoardPrintTime = time.Now()
 		if s.interrupt {
 			panic(common.InterruptError)
 		}
@@ -181,32 +192,43 @@ func (s *MoveSolver) Interrupt() {
 
 func (s *MoveSolver) ReportStatus(
 	board *common.Board,
-	progressStart float64,
+	progress float64,
 	progressEnd float64,
 ) {
 	duration := time.Since(s.startTime)
 	instDuration := time.Since(s.lastBoardPrintTime)
+	lastProgressDuration := time.Since(s.lastProgressTime)
+	if s.firstProgress == 0 {
+		s.firstProgress = progress
+	}
 	var eta time.Duration
-	if progressStart > 0 && duration > 0 {
-		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
+	if progress > s.firstProgress && duration > 0 {
+		eta = time.Duration((1 - progress) * float64(duration) / (progress - s.firstProgress))
+	}
+	if progress > s.lastProgress && lastProgressDuration > 30*time.Second {
+		s.etaInst = time.Duration((1 - progress) * float64(lastProgressDuration) / (progress - s.lastProgress))
+		s.lastProgress = progress
+		s.lastProgressTime = time.Now()
 	}
 	iterationsPerSec := common.BigintSeparated(s.iterations * uint64(time.Second) / uint64(duration))
 	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) * uint64(time.Second) / uint64(instDuration))
 	s.lastIterations = s.iterations
+	s.lastBoardPrintTime = time.Now()
 
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize":         common.BigintSeparated(s.cache.Size()),
 		"iterations":        common.BigintSeparated(s.iterations),
 		"cacheClears":       common.BigintSeparated(s.cache.clears),
 		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
-		"progress":          fmt.Sprintf("%v", progressStart),
-		"eta":               eta,
+		"progress":          fmt.Sprintf("%v", progress),
+		"avgEta":            eta,
+		"eta":               s.etaInst,
 		"avgIps":            iterationsPerSec,
 		"ips":               instIterationsPerSec,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
-		s.progressBar.Set(int(progressStart * progressBarResolution))
+		s.progressBar.Set(int(progress * progressBarResolution))
 	}
 }
 
