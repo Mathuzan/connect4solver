@@ -1,4 +1,4 @@
-package c4solver
+package solver
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 type IMoveSolver interface {
@@ -33,6 +33,8 @@ type MoveSolver struct {
 }
 
 const progressBarResolution = 1_000_000_000
+const refreshProgressPeriod = 2000 * time.Millisecond
+const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
 
 func NewMoveSolver(board *common.Board) *MoveSolver {
 	movesOrder := CalculateMovesOrder(board)
@@ -91,8 +93,6 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 	return endings
 }
 
-const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
-
 // bestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) bestEndingOnMove(
 	board *common.Board,
@@ -114,7 +114,7 @@ func (s *MoveSolver) bestEndingOnMove(
 		}
 	}
 
-	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= 2*time.Second {
+	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= refreshProgressPeriod {
 		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
 		if s.interrupt {

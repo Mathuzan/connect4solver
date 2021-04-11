@@ -10,17 +10,17 @@ go mod download
 
 Run training mode to evaluate cached results:
 ```bash
-./build.sh && ./c4s --train --size 7x6
+./build.sh && ./c4solver --train --size 7x6
 ```
 
 Start a game in playing mode:
 ```bash
-./build.sh && ./c4s --play --size 7x6
+./build.sh && ./c4solver --play --size 7x6
 ```
 
 See help for usage:
 ```bash
-./c4s -h
+./c4solver -h
 ```
 
 ## Testing

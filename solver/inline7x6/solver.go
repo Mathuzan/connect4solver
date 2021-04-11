@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/schollz/progressbar/v3"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 type MoveSolver struct {

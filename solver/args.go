@@ -1,10 +1,10 @@
-package c4solver
+package solver
 
 import (
 	"flag"
 	"fmt"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 type CliArgs struct {

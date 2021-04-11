@@ -1,4 +1,4 @@
-package c4solver
+package solver
 
 import (
 	"fmt"
@@ -6,9 +6,8 @@ import (
 
 	log "github.com/igrek51/log15"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
-	"github.com/igrek51/connect4solver/c4solver/inline5x5"
-	"github.com/igrek51/connect4solver/c4solver/inline7x6"
+	"github.com/igrek51/connect4solver/solver/common"
+	"github.com/igrek51/connect4solver/solver/inline7x6"
 )
 
 func Train(width, height, winStreak int, cacheEnabled bool) {
@@ -56,8 +55,6 @@ func createSolver(board *common.Board) IMoveSolver {
 	// take precedence with inlined optimized solvers
 	if board.W == 7 && board.H == 6 {
 		solver = inline7x6.NewMoveSolver(board)
-	} else if board.W == 5 && board.H == 5 {
-		solver = inline5x5.NewMoveSolver(board)
 	} else {
 		solver = NewMoveSolver(board)
 	}

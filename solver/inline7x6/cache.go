@@ -1,11 +1,9 @@
-package c4solver
+package inline7x6
 
 import (
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 	log "github.com/igrek51/log15"
 )
-
-const maxCacheSize = 1_500_000_000
 
 type EndingCache struct {
 	depthCaches       []map[uint64]common.Player
@@ -33,8 +31,8 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	return &EndingCache{
 		depthCaches:       depthCaches,
 		depthClears:       depthClears,
-		maxCacheDepthSize: maxCacheSize / (boardW * boardH),
-		maxCacheDepth:     uint(boardW*boardH) - 4,
+		maxCacheDepthSize: 35714285,
+		maxCacheDepth:     38,
 		boardW:            boardW,
 		boardH:            boardH,
 		boardW1:           boardW - 1,
@@ -52,10 +50,10 @@ func (s *EndingCache) Get(board *common.Board, depth uint) (ending common.Player
 }
 
 func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player) common.Player {
-	if depth > s.maxCacheDepth {
+	if depth > 38 {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
+	if len(s.depthCaches[depth]) >= 35714285 {
 		log.Debug("clearing cache", log.Ctx{"depth": depth})
 		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
 		s.depthCaches[depth] = make(map[uint64]common.Player)
@@ -75,24 +73,14 @@ var leftKey uint64 = 0
 var rightKey uint64 = 0
 
 func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
-	leftKey = key[0]
-	rightKey = key[s.boardW1]
-	for i := 1; i < s.sideW; i++ {
-		leftKey |= key[i] << (8 * i)
-		rightKey |= key[s.boardW1-i] << (8 * i)
-	}
+	leftKey = key[0] | key[1]<<8 | key[2]<<16
+	rightKey = key[6] | key[5]<<8 | key[4]<<16
 
 	if leftKey <= rightKey {
-		for i := s.sideW; i < s.boardW; i++ {
-			leftKey |= key[i] << (8 * i)
-		}
-		return leftKey
+		return leftKey | key[3]<<24 | key[4]<<32 | key[5]<<40 | key[6]<<48
 	}
 	// mirror map
-	for i := s.sideW; i < s.boardW; i++ {
-		rightKey |= key[s.boardW1-i] << (8 * i)
-	}
-	return rightKey
+	return rightKey | key[3]<<24 | key[2]<<32 | key[1]<<40 | key[0]<<48
 }
 
 func (s *EndingCache) ShowStatistics() {

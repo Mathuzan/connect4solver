@@ -1,11 +1,11 @@
-package c4solver
+package solver
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	. "github.com/igrek51/connect4solver/c4solver/common"
+	. "github.com/igrek51/connect4solver/solver/common"
 )
 
 func TestNobodyWon(t *testing.T) {

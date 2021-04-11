@@ -1,2 +1,2 @@
 #!/bin/bash
-go build -o c4s
+go build -o c4solver

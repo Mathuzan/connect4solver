@@ -3,7 +3,7 @@ package inline7x6
 import (
 	"math/bits"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 type Referee struct {

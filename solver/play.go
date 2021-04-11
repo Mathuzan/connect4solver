@@ -1,4 +1,4 @@
-package c4solver
+package solver
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 	log "github.com/igrek51/log15"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 func Play(

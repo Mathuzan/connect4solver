@@ -11,7 +11,7 @@ go.sum
 cpuprof.prof
 
 /connect4solver
-/c4s
+/c4solver
 /cache/cache_*.protobuf
 
 # Protobuf

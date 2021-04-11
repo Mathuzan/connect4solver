@@ -1,9 +1,9 @@
-package c4solver
+package solver
 
 import (
 	"math/bits"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 type Referee struct {

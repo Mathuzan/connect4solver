@@ -6,8 +6,8 @@ import (
 
 	log "github.com/igrek51/log15"
 
-	c4 "github.com/igrek51/connect4solver/c4solver"
-	"github.com/igrek51/connect4solver/c4solver/common"
+	c4 "github.com/igrek51/connect4solver/solver"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 func main() {

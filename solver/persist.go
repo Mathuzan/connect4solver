@@ -1,4 +1,4 @@
-package inline7x6
+package solver
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/igrek51/connect4solver/c4solver/common"
 	pb "github.com/igrek51/connect4solver/proto"
+	"github.com/igrek51/connect4solver/solver/common"
 )
 
 func SaveCache(cache *EndingCache) error {
