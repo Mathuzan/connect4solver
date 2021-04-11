@@ -86,7 +86,7 @@ func printEndingsLine(endings []common.Player, player common.Player) {
 		if ending == common.NoMove {
 			display = common.PlayerDisplays[common.NoMove]
 		} else {
-			playerEnding := EndingForPlayer(ending, player)
+			playerEnding := common.EndingForPlayer(ending, player)
 			display = common.ShortGameEndingDisplays[playerEnding]
 		}
 		displays = append(displays, display)
@@ -127,7 +127,7 @@ func estimateMoveScores(
 	player common.Player, board *common.Board, scoresEnabled bool,
 ) []int {
 	scores := make([]int, len(endings))
-	opponent := oppositePlayer(player)
+	opponent := common.OppositePlayer(player)
 	if !scoresEnabled {
 		for move, ending := range endings {
 			if ending == player {

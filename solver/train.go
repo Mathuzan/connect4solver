@@ -35,7 +35,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	player := board.NextPlayer()
 	for move, ending := range endings {
 		if ending != common.NoMove {
-			playerEnding := EndingForPlayer(ending, player)
+			playerEnding := common.EndingForPlayer(ending, player)
 			log.Info(fmt.Sprintf("Best ending for move %d: %v", move, playerEnding))
 		}
 	}

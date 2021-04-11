@@ -37,7 +37,7 @@ const refreshProgressPeriod = 2000 * time.Millisecond
 const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
 
 func NewMoveSolver(board *common.Board) *MoveSolver {
-	movesOrder := CalculateMovesOrder(board)
+	movesOrder := common.CalculateMovesOrder(board)
 	cache := NewEndingCache(board.W, board.H)
 	log.Debug("Solver configured", log.Ctx{
 		"boardWidth":        board.W,
@@ -126,7 +126,7 @@ func (s *MoveSolver) bestEndingOnMove(
 		return player
 	}
 
-	nextPlayer := oppositePlayer(player)
+	nextPlayer := common.OppositePlayer(player)
 
 	// find further possible moves
 	var bestEnding common.Player = common.Empty // Tie as a default ending (when no more moves)
@@ -153,10 +153,6 @@ func (s *MoveSolver) bestEndingOnMove(
 	return s.cache.Put(board, depth, bestEnding)
 }
 
-func oppositePlayer(player common.Player) common.Player {
-	return 1 - player
-}
-
 // BestEndingOnMove finds best ending on given next move
 func (s *MoveSolver) BestEndingOnMove(
 	board *common.Board,
@@ -168,32 +164,6 @@ func (s *MoveSolver) BestEndingOnMove(
 
 func (s *MoveSolver) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
 	return s.referee.HasPlayerWon(board, move, y, player)
-}
-
-func CalculateMovesOrder(board *common.Board) []int {
-	movesOrder := []int{}
-	pivot := board.W / 2
-	for x := 0; x < board.W; x++ {
-		var move int
-		if x%2 == 0 {
-			move = pivot - (x+1)/2
-		} else {
-			move = (pivot + (x+1)/2) % board.W
-		}
-		movesOrder = append(movesOrder, move)
-	}
-	return movesOrder
-}
-
-func EndingForPlayer(ending common.Player, player common.Player) common.GameEnding {
-	if ending == common.Empty {
-		return common.Tie
-	}
-	if ending == player {
-		return common.Win
-	} else {
-		return common.Lose
-	}
 }
 
 func (s *MoveSolver) PreloadCache(board *common.Board) {
