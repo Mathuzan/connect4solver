@@ -144,12 +144,15 @@ func estimateMoveScores(
 	}
 
 	for move, ending := range endings {
+		if ending == common.NoMove {
+			scores[move] = -1000
+			continue
+		}
+
 		moveY := board.Throw(move, player)
 		score := 0
 
-		if ending == common.NoMove {
-			score = -1000
-		} else if solver.HasPlayerWon(board, move, moveY, player) {
+		if solver.HasPlayerWon(board, move, moveY, player) {
 			score = 100
 		} else if solver.HasPlayerWon(board, move, moveY, opponent) {
 			score = -100

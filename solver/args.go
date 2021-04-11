@@ -41,6 +41,7 @@ func GetArgs() *CliArgs {
 
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
+	browse := flag.Bool("browse", false, "Browsing mode for debugging purposes")
 
 	flag.Parse()
 
@@ -50,12 +51,15 @@ func GetArgs() *CliArgs {
 
 	args.Cache = !*nocache
 
-	args.Mode = common.TrainMode
+	args.Mode = common.PlayMode
 	if *train {
 		args.Mode = common.TrainMode
 	}
 	if *play {
 		args.Mode = common.PlayMode
+	}
+	if *browse {
+		args.Mode = common.BrowseMode
 	}
 
 	return args

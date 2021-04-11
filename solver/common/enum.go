@@ -20,9 +20,10 @@ const (
 type GameEnding string
 
 const (
-	Win  GameEnding = "\u001b[32;1mWin\u001b[0m"
-	Tie  GameEnding = "\u001b[33;1mTie\u001b[0m"
-	Lose GameEnding = "\u001b[31;1mLose\u001b[0m"
+	Win      GameEnding = "\u001b[32;1mWin\u001b[0m"
+	Tie      GameEnding = "\u001b[33;1mTie\u001b[0m"
+	Lose     GameEnding = "\u001b[31;1mLose\u001b[0m"
+	NoEnding GameEnding = "."
 )
 
 var PlayerDisplays = map[Player]string{
@@ -33,9 +34,10 @@ var PlayerDisplays = map[Player]string{
 }
 
 var ShortGameEndingDisplays = map[GameEnding]string{
-	Win:  "\u001b[32;1mW\u001b[0m",
-	Tie:  "\u001b[33;1mT\u001b[0m",
-	Lose: "\u001b[31;1mL\u001b[0m",
+	Win:      "\u001b[32;1mW\u001b[0m",
+	Tie:      "\u001b[33;1mT\u001b[0m",
+	Lose:     "\u001b[31;1mL\u001b[0m",
+	NoEnding: ".",
 }
 
 func (p Player) String() string {
@@ -49,8 +51,9 @@ func (e GameEnding) String() string {
 type Mode string
 
 const (
-	TrainMode Mode = "train"
-	PlayMode  Mode = "play"
+	TrainMode  Mode = "train"
+	PlayMode   Mode = "play"
+	BrowseMode Mode = "browse"
 )
 
 var InterruptError error = errors.New("Interrupt")
