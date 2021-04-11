@@ -1,8 +1,6 @@
 package solver
 
 import (
-	"math/bits"
-
 	"github.com/igrek51/connect4solver/solver/common"
 )
 
@@ -11,15 +9,24 @@ type Referee struct {
 	h         int
 	winStreak int
 
-	verticalMovesMap []common.Player
-	binaryRowMap     []bool
-	winStreak1       int
+	verticalMovesMap            []common.Player
+	binaryRowMap                []bool
+	diagonalEvaluatorMap        [][]winnerEvaluator
+	counterDiagonalEvaluatorMap [][]winnerEvaluator
+	winStreak1                  int
 
 	winner       common.Player
 	lastToken    common.Player
 	currentToken common.Player
 	sameStreak   int
 	stacksSum    uint64
+}
+
+type winnerEvaluator func(*common.Board, common.Player) bool
+
+type coordinate struct {
+	x int
+	y int
 }
 
 func NewReferee(board *common.Board) *Referee {
@@ -48,14 +55,25 @@ func NewReferee(board *common.Board) *Referee {
 	}
 	s.binaryRowMap = binaryRowMap
 
+	// build functions handling diagonal validation for each coordinate
+	s.diagonalEvaluatorMap = make([][]winnerEvaluator, board.W)
+	s.counterDiagonalEvaluatorMap = make([][]winnerEvaluator, board.W)
+	for x := 0; x < board.W; x++ {
+		s.diagonalEvaluatorMap[x] = make([]winnerEvaluator, board.H)
+		s.counterDiagonalEvaluatorMap[x] = make([]winnerEvaluator, board.H)
+		for y := 0; y < board.H; y++ {
+			s.diagonalEvaluatorMap[x][y] = s.buildDiagonalEvaluator(x, y)
+			s.counterDiagonalEvaluatorMap[x][y] = s.buildCounterDiagonalEvaluator(x, y)
+		}
+	}
+
 	return s
 }
 
 func (s *Referee) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
 	return s.HasPlayerWonVertical(board, move, player) ||
 		s.HasPlayerWonHorizontal(board, y, player) ||
-		s.HasPlayerWonDiagonal(board, move, y, player) ||
-		s.HasPlayerWonDiagonalCounter(board, move, y, player)
+		s.HasPlayerWonDiagonal(board, move, y, player)
 }
 
 func (s *Referee) HasPlayerWonVertical(board *common.Board, move int, player common.Player) bool {
@@ -63,7 +81,7 @@ func (s *Referee) HasPlayerWonVertical(board *common.Board, move int, player com
 }
 
 func (s *Referee) HasPlayerWonHorizontal(board *common.Board, y int, player common.Player) bool {
-	var binaryRow uint64
+	var binaryRow uint8
 	for x := 0; x < s.w; x++ {
 		if board.GetCell(x, y) == player {
 			binaryRow |= 1 << x
@@ -72,32 +90,9 @@ func (s *Referee) HasPlayerWonHorizontal(board *common.Board, y int, player comm
 	return s.binaryRowMap[binaryRow]
 }
 
-func (s *Referee) HasPlayerWonDiagonal(board *common.Board, startX int, startY int, player common.Player) bool {
-	var binaryRow uint64
-	y := startY - s.winStreak1
-	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
-		if x >= 0 && x < s.w && y >= 0 && y < s.h {
-			if board.GetCell(x, y) == player {
-				binaryRow |= 1 << x
-			}
-		}
-		y++
-	}
-	return s.binaryRowMap[binaryRow]
-}
-
-func (s *Referee) HasPlayerWonDiagonalCounter(board *common.Board, startX int, startY int, player common.Player) bool {
-	var binaryRow uint64
-	y := startY + s.winStreak1
-	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
-		if x >= 0 && x < s.w && y >= 0 && y < s.h {
-			if board.GetCell(x, y) == player {
-				binaryRow |= 1 << x
-			}
-		}
-		y--
-	}
-	return s.binaryRowMap[binaryRow]
+func (s *Referee) HasPlayerWonDiagonal(board *common.Board, x int, y int, player common.Player) bool {
+	return s.diagonalEvaluatorMap[x][y](board, player) ||
+		s.counterDiagonalEvaluatorMap[x][y](board, player)
 }
 
 func (s *Referee) HasWinner(board *common.Board) common.Player {
@@ -136,7 +131,7 @@ func (s *Referee) checkHorizontal(board *common.Board) common.Player {
 		s.stacksSum |= board.State[x]
 	}
 
-	for y := 0; y < 7-bits.LeadingZeros8(uint8(s.stacksSum)); y++ {
+	for y := 0; y < common.StackSizeLookup[s.stacksSum]; y++ {
 		s.lastToken = board.GetCell(0, y)
 		s.sameStreak = 1
 
@@ -256,7 +251,7 @@ func (s *Referee) checkColumnSequence(board *common.Board, columnState uint64, s
 }
 
 func getStackSize(columnState uint64) int {
-	return 7 - bits.LeadingZeros8(uint8(columnState))
+	return common.StackSizeLookup[columnState]
 }
 
 func (s *Referee) whoWonColumn(columnState uint64) common.Player {
@@ -290,4 +285,58 @@ func (s *Referee) hasWonRow(row uint64) bool {
 		ones &= ones >> 1
 	}
 	return ones != 0
+}
+
+func noWinnerEvaluator(*common.Board, common.Player) bool {
+	return false
+}
+
+func (s *Referee) buildDiagonalEvaluator(startX, startY int) winnerEvaluator {
+	coordinates := []coordinate{}
+	y := startY - s.winStreak1
+	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
+		if x >= 0 && x < s.w && y >= 0 && y < s.h {
+			coordinates = append(coordinates, coordinate{x: x, y: y})
+		}
+		y++
+	}
+
+	if len(coordinates) < s.winStreak {
+		return noWinnerEvaluator
+	}
+
+	return func(board *common.Board, player common.Player) bool {
+		var binaryRow uint8
+		for i, coordinate := range coordinates {
+			if board.GetCell(coordinate.x, coordinate.y) == player {
+				binaryRow |= 1 << i
+			}
+		}
+		return s.binaryRowMap[binaryRow]
+	}
+}
+
+func (s *Referee) buildCounterDiagonalEvaluator(startX, startY int) winnerEvaluator {
+	coordinates := []coordinate{}
+	y := startY + s.winStreak1
+	for x := startX - s.winStreak1; x <= startX+s.winStreak1; x++ {
+		if x >= 0 && x < s.w && y >= 0 && y < s.h {
+			coordinates = append(coordinates, coordinate{x: x, y: y})
+		}
+		y--
+	}
+
+	if len(coordinates) < s.winStreak {
+		return noWinnerEvaluator
+	}
+
+	return func(board *common.Board, player common.Player) bool {
+		var binaryRow uint8
+		for i, coordinate := range coordinates {
+			if board.GetCell(coordinate.x, coordinate.y) == player {
+				binaryRow |= 1 << i
+			}
+		}
+		return s.binaryRowMap[binaryRow]
+	}
 }

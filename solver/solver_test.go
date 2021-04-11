@@ -94,9 +94,9 @@ func TestCachedResultsCount(t *testing.T) {
 
 func BenchmarkMoveSolver4x4(b *testing.B) {
 	board := NewBoard(WithSize(4, 4), WithWinStreak(4))
-	solver := NewMoveSolver(board)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		solver := NewMoveSolver(board)
 		solver.MovesEndings(board)
 	}
 }

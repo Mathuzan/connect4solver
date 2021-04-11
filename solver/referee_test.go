@@ -146,7 +146,6 @@ func TestPlayerWonVerticalOnMove(t *testing.T) {
 	assert.EqualValues(t, false, referee.HasPlayerWonVertical(board, 0, PlayerA))
 	assert.EqualValues(t, true, referee.HasPlayerWonVertical(board, 0, PlayerB))
 	board = ParseBoard("A\nA\nA\nA\nA\nA")
-	assert.EqualValues(t, PlayerA, referee.checkVertical(board))
 	assert.EqualValues(t, true, referee.HasPlayerWonVertical(board, 0, PlayerA))
 	assert.EqualValues(t, false, referee.HasPlayerWonVertical(board, 0, PlayerB))
 

@@ -110,6 +110,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	if depth <= s.cache.maxCacheDepth {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
+			s.cache.cacheUsages++
 			return ending
 		}
 	}

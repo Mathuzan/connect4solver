@@ -1,8 +1,6 @@
 package inline7x6
 
 import (
-	"math/bits"
-
 	"github.com/igrek51/connect4solver/solver/common"
 )
 
@@ -111,7 +109,7 @@ func (s *Referee) HasPlayerWonDiagonalCounter(board *common.Board, startX int, s
 }
 
 func getStackSize(columnState uint64) int {
-	return 7 - bits.LeadingZeros8(uint8(columnState))
+	return common.StackSizeLookup[columnState]
 }
 
 func (s *Referee) whoWonColumn(columnState uint64) common.Player {

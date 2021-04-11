@@ -20,6 +20,15 @@ type Board struct {
 
 type BoardKey [7]uint64
 
+// Board column state -> stack size
+var StackSizeLookup [128]int
+
+func init() {
+	for state := uint8(1); state < 128; state++ {
+		StackSizeLookup[state] = 7 - bits.LeadingZeros8(state)
+	}
+}
+
 func NewBoard(options ...Option) *Board {
 	// set defaults
 	b := &Board{
@@ -71,8 +80,10 @@ func (b *Board) GetCell(x int, y int) Player {
 
 func (b *Board) Throw(x int, player Player) int {
 	colSize := b.StackSize(x)
-	// reset column signifying stack size
-	b.State[x] = (b.State[x] & ^(1 << colSize)) | (1 << (colSize + 1)) | (uint64(player) << colSize)
+	if player == PlayerA { // Player A = 0
+		b.State[x] &= ^(1 << colSize) // reset column signifying old stack size
+	}
+	b.State[x] |= 1 << (colSize + 1)
 	return colSize
 }
 
@@ -82,7 +93,7 @@ func (b *Board) Revert(x int, y int) {
 }
 
 func (b *Board) StackSize(x int) int {
-	return 7 - bits.LeadingZeros8(uint8(b.State[x]))
+	return StackSizeLookup[b.State[x]]
 }
 
 func (b *Board) String() string {

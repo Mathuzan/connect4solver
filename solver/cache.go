@@ -44,10 +44,6 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 
 func (s *EndingCache) Get(board *common.Board, depth uint) (ending common.Player, ok bool) {
 	ending, ok = s.depthCaches[depth][s.reflectedBoardKey(board.State)]
-	if !ok {
-		return
-	}
-	s.cacheUsages++
 	return
 }
 
