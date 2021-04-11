@@ -72,7 +72,7 @@ func WithWinStreak(winStreak int) Option {
 
 // GetCell return token at given cell coordinates (axes oriented top-right)
 func (b *Board) GetCell(x int, y int) Player {
-	if b.State[x]>>y <= 1 {
+	if y >= b.StackSize(x) {
 		return Empty
 	}
 	return Player((b.State[x] >> y) & 0b1)
