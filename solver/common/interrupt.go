@@ -15,6 +15,7 @@ func HandleInterrupt(solver IMoveSolver) {
 	go func() {
 		<-c
 		log.Debug("Signal Interrupt - stopping")
+		signal.Stop(c)
 		solver.Interrupt()
 	}()
 }

@@ -55,7 +55,7 @@ func Play(
 			playerEnding := common.EndingForPlayer(endings[move], player)
 			fmt.Printf("Player %v moves: %d (%v)\n", player, move, playerEnding)
 		} else {
-			move = readNextMove(endings, player, bestMove, showHints)
+			move = readNextMove(endings, player, board, bestMove, showHints)
 		}
 
 		moveY := board.Throw(move, player)
@@ -83,6 +83,10 @@ func isATie(board *common.Board) bool {
 }
 
 func printEndingsLine(endings []common.Player, player common.Player) {
+	if endings == nil {
+		return
+	}
+
 	displays := []string{}
 	for _, ending := range endings {
 		var display string
@@ -98,7 +102,7 @@ func printEndingsLine(endings []common.Player, player common.Player) {
 }
 
 func readNextMove(
-	endings []common.Player, player common.Player,
+	endings []common.Player, player common.Player, board *common.Board,
 	bestMove int, showBest bool,
 ) int {
 	for {
@@ -107,17 +111,17 @@ func readNextMove(
 		if showBest {
 			bestStr = fmt.Sprintf(" (Best: %d)", bestMove)
 		}
-		fmt.Printf("Player %v moves [0-%d]%s: ", player, len(endings)-1, bestStr)
+		fmt.Printf("Player %v moves [0-%d]%s: ", player, board.W-1, bestStr)
 		_, err := fmt.Scanf("%d", &move)
 		if err != nil {
 			log.Error("Invalid number", log.Ctx{"error": err})
 			continue
 		}
-		if move < 0 || move >= len(endings) {
+		if move < 0 || move >= board.W {
 			log.Error("Move number is out of range")
 			continue
 		}
-		if endings[move] == common.NoMove {
+		if endings != nil && endings[move] == common.NoMove {
 			log.Error("Column is already full")
 			continue
 		}
@@ -129,20 +133,12 @@ func estimateMoveScores(
 	solver common.IMoveSolver, endings []common.Player,
 	player common.Player, board *common.Board, scoresEnabled bool,
 ) []int {
+	if endings == nil {
+		return nil
+	}
+
 	scores := make([]int, len(endings))
 	opponent := common.OppositePlayer(player)
-	if !scoresEnabled {
-		for move, ending := range endings {
-			if ending == player {
-				scores[move] = 10
-			} else if ending == opponent {
-				scores[move] = -10
-			} else if ending == common.NoMove {
-				scores[move] = -1000
-			}
-		}
-		return scores
-	}
 
 	for move, ending := range endings {
 		if ending == common.NoMove {
@@ -158,17 +154,25 @@ func estimateMoveScores(
 		} else if solver.HasPlayerWon(board, move, moveY, opponent) {
 			score = -100
 		} else {
-			if ending == player {
-				score += 10
-			} else if ending == opponent {
-				score -= 10
-			}
-			nextEndings := solver.MovesEndings(board)
-			for _, nextEnding := range nextEndings {
-				if nextEnding == player {
-					score++
-				} else if nextEnding == opponent {
-					score--
+			if scoresEnabled {
+				if ending == player {
+					score += 10
+				} else if ending == opponent {
+					score -= 10
+				}
+				nextEndings := solver.MovesEndings(board)
+				for _, nextEnding := range nextEndings {
+					if nextEnding == player {
+						score++
+					} else if nextEnding == opponent {
+						score--
+					}
+				}
+			} else {
+				if ending == player {
+					score = 10
+				} else if ending == opponent {
+					score = -10
 				}
 			}
 		}
@@ -176,11 +180,14 @@ func estimateMoveScores(
 		scores[move] = score
 		board.Revert(move, moveY)
 	}
-
 	return scores
 }
 
 func findBestMove(scores []int) int {
+	if scores == nil {
+		return 0
+	}
+
 	order := rand.Perm(len(scores)) // get random if there are many maximum values
 	maxi := order[0]
 	for _, move := range order {
