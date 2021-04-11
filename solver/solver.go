@@ -18,9 +18,10 @@ type MoveSolver struct {
 	startTime          time.Time
 	progressBar        *progressbar.ProgressBar
 
-	iterations uint64
-	movesOrder []int
-	interrupt  bool
+	iterations     uint64
+	lastIterations uint64
+	movesOrder     []int
+	interrupt      bool
 }
 
 const progressBarResolution = 1_000_000_000
@@ -108,8 +109,8 @@ func (s *MoveSolver) bestEndingOnMove(
 	}
 
 	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= refreshProgressPeriod {
-		s.lastBoardPrintTime = time.Now()
 		s.ReportStatus(board, progressStart, progressEnd)
+		s.lastBoardPrintTime = time.Now()
 		if s.interrupt {
 			panic(common.InterruptError)
 		}
@@ -184,11 +185,14 @@ func (s *MoveSolver) ReportStatus(
 	progressEnd float64,
 ) {
 	duration := time.Since(s.startTime)
+	instDuration := time.Since(s.lastBoardPrintTime)
 	var eta time.Duration
 	if progressStart > 0 && duration > 0 {
 		eta = time.Duration((1 - progressStart) / (progressStart / float64(duration)))
 	}
 	iterationsPerSec := common.BigintSeparated(s.iterations * uint64(time.Second) / uint64(duration))
+	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) * uint64(time.Second) / uint64(instDuration))
+	s.lastIterations = s.iterations
 
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize":         common.BigintSeparated(s.cache.Size()),
@@ -197,7 +201,8 @@ func (s *MoveSolver) ReportStatus(
 		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
 		"progress":          fmt.Sprintf("%v", progressStart),
 		"eta":               eta,
-		"ips":               iterationsPerSec,
+		"avgIps":            iterationsPerSec,
+		"ips":               instIterationsPerSec,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
