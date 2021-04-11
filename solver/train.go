@@ -7,18 +7,17 @@ import (
 	log "github.com/igrek51/log15"
 
 	"github.com/igrek51/connect4solver/solver/common"
-	"github.com/igrek51/connect4solver/solver/inline7x6"
 )
 
 func Train(width, height, winStreak int, cacheEnabled bool) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 	fmt.Println(board.String())
 
-	solver := createSolver(board)
-
+	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
+	common.HandleInterrupt(solver)
 
 	startTime := time.Now()
 	endings := solver.MovesEndings(board)
@@ -48,16 +47,4 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	log.Info("Done", log.Ctx{
 		"totalTime": totalElapsed,
 	})
-}
-
-func createSolver(board *common.Board) IMoveSolver {
-	var solver IMoveSolver
-	// take precedence with inlined optimized solvers
-	if board.W == 7 && board.H == 6 {
-		solver = inline7x6.NewMoveSolver(board)
-	} else {
-		solver = NewMoveSolver(board)
-	}
-	HandleInterrupt(solver)
-	return solver
 }

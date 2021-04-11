@@ -92,11 +92,28 @@ func TestCachedResultsCount(t *testing.T) {
 	assert.Equal(t, 5, len(solver.cache.depthCaches[1]))
 }
 
+func Test7x6Solver(t *testing.T) {
+	board := ParseBoard(`
+	.......
+	.......
+	.......
+	ABABABA
+	ABABABB
+	ABABABA
+	`)
+	solver := CreateSolver(board)
+	endings := solver.MovesEndings(board)
+	assert.Equal(t, []Player{PlayerA, PlayerB, PlayerA, PlayerB, PlayerA, PlayerB, PlayerA}, endings)
+}
+
 func BenchmarkMoveSolver4x4(b *testing.B) {
 	board := NewBoard(WithSize(4, 4), WithWinStreak(4))
 	b.ResetTimer()
+	b.StopTimer()
 	for i := 0; i < b.N; i++ {
-		solver := NewMoveSolver(board)
+		solver := CreateSolver(board)
+		b.StartTimer()
 		solver.MovesEndings(board)
+		b.StopTimer()
 	}
 }

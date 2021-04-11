@@ -63,6 +63,7 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 	s.lastBoardPrintTime = time.Now()
 	s.startTime = time.Now()
 	s.iterations = 0
+	s.interrupt = false
 	endings = make([]common.Player, board.W)
 	player := board.NextPlayer()
 	depth := board.CountMoves()
@@ -101,6 +102,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	if depth <= 38 {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
+			s.cache.cacheUsages++
 			return ending
 		}
 	}

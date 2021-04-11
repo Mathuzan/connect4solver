@@ -52,15 +52,19 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 		return ending
 	}
 	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
-		log.Debug("clearing cache", log.Ctx{"depth": depth})
-		s.cachedEntries -= uint64(len(s.depthCaches[depth]))
-		s.depthCaches[depth] = make(map[uint64]common.Player)
-		s.depthClears[depth]++
-		s.clears++
+		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending
 	s.cachedEntries++
 	return ending
+}
+
+func (s *EndingCache) ClearCache(depth uint) {
+	log.Debug("clearing cache", log.Ctx{"depth": depth})
+	s.cachedEntries -= uint64(len(s.depthCaches[depth]))
+	s.depthCaches[depth] = make(map[uint64]common.Player)
+	s.depthClears[depth]++
+	s.clears++
 }
 
 func (s *EndingCache) Size() uint64 {

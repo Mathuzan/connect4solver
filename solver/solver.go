@@ -11,15 +11,6 @@ import (
 	"github.com/igrek51/connect4solver/solver/common"
 )
 
-type IMoveSolver interface {
-	MovesEndings(board *common.Board) []common.Player
-	HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool
-	Interrupt()
-	PreloadCache(board *common.Board)
-	SaveCache()
-	SummaryVars() log.Ctx
-}
-
 type MoveSolver struct {
 	cache              *EndingCache
 	referee            *Referee
@@ -74,6 +65,7 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 	s.lastBoardPrintTime = time.Now()
 	s.startTime = time.Now()
 	s.iterations = 0
+	s.interrupt = false
 	endings = make([]common.Player, board.W)
 	player := board.NextPlayer()
 	depth := board.CountMoves()

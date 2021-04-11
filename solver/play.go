@@ -21,7 +21,7 @@ func Play(
 
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
-	var solver IMoveSolver = NewMoveSolver(board)
+	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
@@ -125,7 +125,7 @@ func readNextMove(
 }
 
 func estimateMoveScores(
-	solver IMoveSolver, endings []common.Player,
+	solver common.IMoveSolver, endings []common.Player,
 	player common.Player, board *common.Board, scoresEnabled bool,
 ) []int {
 	scores := make([]int, len(endings))

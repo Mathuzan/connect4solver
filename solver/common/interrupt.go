@@ -1,8 +1,10 @@
-package solver
+package common
 
 import (
 	"os"
 	"os/signal"
+
+	"github.com/pkg/errors"
 
 	log "github.com/igrek51/log15"
 )
@@ -16,3 +18,5 @@ func HandleInterrupt(solver IMoveSolver) {
 		solver.Interrupt()
 	}()
 }
+
+var InterruptError error = errors.New("Interrupt")

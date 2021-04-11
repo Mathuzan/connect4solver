@@ -1,9 +1,5 @@
 package common
 
-import (
-	"github.com/pkg/errors"
-)
-
 type Player uint8
 
 const (
@@ -55,5 +51,3 @@ const (
 	PlayMode   Mode = "play"
 	BrowseMode Mode = "browse"
 )
-
-var InterruptError error = errors.New("Interrupt")

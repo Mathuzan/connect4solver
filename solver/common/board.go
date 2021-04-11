@@ -45,11 +45,8 @@ func NewBoard(options ...Option) *Board {
 		}
 	}
 
-	// validate & post-process
 	b.State = [7]uint64{}
-	for x := 0; x < b.W; x++ {
-		b.State[x] = 0b1
-	}
+	b.Clear()
 	return b
 }
 
@@ -169,6 +166,12 @@ func (b *Board) CountMoves() uint {
 
 func (b *Board) CanMakeMove(x int) bool {
 	return b.State[x]>>b.H == 0
+}
+
+func (b *Board) Clear() {
+	for x := 0; x < b.W; x++ {
+		b.State[x] = 0b1
+	}
 }
 
 func (b *Board) Clone() *Board {

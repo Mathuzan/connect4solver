@@ -26,6 +26,6 @@ func main() {
 		c4.Play(args.Width, args.Height, args.WinStreak, args.Cache, args.HideA, args.HideB,
 			args.AutoAttackA, args.AutoAttackB, args.Scores)
 	} else if args.Mode == common.BrowseMode {
-		c4.Browse(args.Width, args.Height, args.WinStreak)
+		c4.Browse(args.Width, args.Height, args.WinStreak, args.Cache)
 	}
 }

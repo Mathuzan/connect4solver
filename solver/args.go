@@ -37,7 +37,7 @@ func GetArgs() *CliArgs {
 	flag.BoolVar(&args.HideB, "hide-b", false, "Hide endings hints for player B")
 	flag.BoolVar(&args.AutoAttackA, "autoattack-a", false, "Make player A move automatically")
 	flag.BoolVar(&args.AutoAttackB, "autoattack-b", false, "Make player B move automatically")
-	flag.BoolVar(&args.Scores, "scores", false, "Show scores of each move")
+	flag.BoolVar(&args.Scores, "scores", false, "Show scores of each move, analyzing deep results")
 
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
