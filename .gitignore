@@ -13,6 +13,7 @@ cpuprof.prof
 /connect4solver
 /c4solver
 /cache/cache_*.protobuf
+/cache/cache_*.protobuf.bak
 
 # Protobuf
 protoc-linux

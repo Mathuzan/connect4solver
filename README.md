@@ -69,14 +69,15 @@ Usage of ./c4solver:
     	win streak (default 4)
 ```
 
-## Performance Tricks
-Tricks used to improve performance:
+## Search algorithm
+AI algorithm solves the board to the very end. It is based on minimax decision rule.
+While on 7x6 board there are `4,531,985,219,092` possible positions, some tricks were used to improve search algorithm performance:
 - Representing whole board as binary number,
-- Checking against winning condition using bitwise operators,
-- Caching best game endings for later boards - different moves sequences lead to the same board,
+- Checking against winning condition using fast bitwise operators (eg. XOR with bitwise shift to find 4 consecutive pieces),
+- Caching best game endings for later boards (transposition table) - different moves sequences lead to the same board,
 - Disregarding mirrored boards - reflected boards can be treated as the same,
-- Short-circuit when finding winning result,
-- Winning strategy heuristics - start from middle moves,
+- Alpha-beta pruning - Short-circuit if winning result is found,
+- Move ordering heuristics - start from middle moves to find winning strategy faster,
 - Checking only current player's move local neighbourhood when checking winning condition - don't need to check all rows & columns each time.
 
 The optimized solver algorithm is able to consider over 4 millions boards per second, running on a regular laptop.
