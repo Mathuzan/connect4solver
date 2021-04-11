@@ -51,6 +51,8 @@ func Play(
 		var move int
 		if (player == common.PlayerA && autoAttackA) || (player == common.PlayerB && autoAttackB) {
 			move = bestMove
+			playerEnding := common.EndingForPlayer(endings[move], player)
+			fmt.Printf("Player %v moves: %d (%v)\n", player, move, playerEnding)
 		} else {
 			move = readNextMove(endings, player, bestMove, showHints)
 		}
