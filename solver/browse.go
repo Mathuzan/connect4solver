@@ -19,7 +19,7 @@ func Browse(
 ) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 
-	var solver *MoveSolver = NewMoveSolver(board)
+	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
 	}
@@ -56,7 +56,7 @@ func Browse(
 		} else if action == "new" {
 			board.Clear()
 		} else if action == "clear_cache" {
-			solver.cache.ClearCache(uint(x))
+			solver.Cache().ClearCache(uint(x))
 		} else if action == "endings" {
 			startTime := time.Now()
 			endings := solver.MovesEndings(board)
@@ -70,18 +70,19 @@ func Browse(
 				printEndingsLine(endings, player)
 			}
 		} else if action == "cache" {
-			solver.cache.ShowStatistics()
+			solver.Cache().ShowStatistics()
 			depth := board.CountMoves()
 			cachedEndings := getCachedEndings(board, solver)
-			depthCache := solver.cache.depthCaches[depth]
 			log.Debug("cache statistics", log.Ctx{
 				"depth":          depth,
-				"depthCacheSize": len(depthCache),
+				"depthCacheSize": solver.Cache().DepthSize(depth),
 				"cachedEndings":  cachedEndings,
 			})
 			printGameEndingsLine(cachedEndings)
 		} else if action == "save" {
 			solver.SaveCache()
+		} else if action == "retrain" {
+			retrainDepth(board, solver, uint(x))
 		}
 	}
 }
@@ -90,7 +91,7 @@ func readNextAction() (string, int) {
 	for {
 		fmt.Printf("Enter command (h for help) > ")
 		var command string
-		var move int
+		var x int
 
 		in := bufio.NewReader(os.Stdin)
 		command, err := in.ReadString('\n')
@@ -108,28 +109,11 @@ func readNextAction() (string, int) {
 			fmt.Println("  c - show cache statistics & cached endings for current board")
 			fmt.Println("  new - start new game")
 			fmt.Println("  clear X - clear cache at given depth")
+			fmt.Println("  retrain X - retrain all cases at given depth")
 			fmt.Println("  save - save cache file")
 			fmt.Println("  q - quit")
 		} else if command == "" {
 			return "", 0
-		} else if strings.HasPrefix(command, "m") {
-			_, err := fmt.Sscanf(command, "m%d", &move)
-			if err != nil {
-				_, err2 := fmt.Sscanf(command, "m %d", &move)
-				if err2 == nil {
-					return "move", move
-				}
-				log.Error("Invalid number", log.Ctx{"error": err})
-				continue
-			}
-			return "move", move
-		} else if strings.HasPrefix(command, "r") {
-			_, err := fmt.Sscanf(command, "r%d", &move)
-			if err != nil {
-				log.Error("Invalid number", log.Ctx{"error": err})
-				continue
-			}
-			return "revert", move
 		} else if command == "q" {
 			return "quit", 0
 		} else if command == "e" {
@@ -141,12 +125,37 @@ func readNextAction() (string, int) {
 		} else if command == "save" {
 			return "save", 0
 		} else if strings.HasPrefix(command, "clear") {
-			_, err := fmt.Sscanf(command, "clear %d", &move)
+			_, err := fmt.Sscanf(command, "clear %d", &x)
 			if err != nil {
 				log.Error("Invalid number", log.Ctx{"error": err})
 				continue
 			}
-			return "clear_cache", move
+			return "clear_cache", x
+		} else if strings.HasPrefix(command, "retrain") {
+			_, err := fmt.Sscanf(command, "retrain %d", &x)
+			if err != nil {
+				log.Error("Invalid number", log.Ctx{"error": err})
+				continue
+			}
+			return "retrain", x
+		} else if strings.HasPrefix(command, "m") {
+			_, err := fmt.Sscanf(command, "m%d", &x)
+			if err != nil {
+				_, err2 := fmt.Sscanf(command, "m %d", &x)
+				if err2 == nil {
+					return "move", x
+				}
+				log.Error("Invalid number", log.Ctx{"error": err})
+				continue
+			}
+			return "move", x
+		} else if strings.HasPrefix(command, "r") {
+			_, err := fmt.Sscanf(command, "r%d", &x)
+			if err != nil {
+				log.Error("Invalid number", log.Ctx{"error": err})
+				continue
+			}
+			return "revert", x
 		} else if move, err := strconv.Atoi(command); len(command) == 1 && err == nil {
 			return "move", move
 		} else {
@@ -156,7 +165,7 @@ func readNextAction() (string, int) {
 	}
 }
 
-func getCachedEndings(board *common.Board, solver *MoveSolver) []common.GameEnding {
+func getCachedEndings(board *common.Board, solver common.IMoveSolver) []common.GameEnding {
 	endings := make([]common.GameEnding, board.W)
 	player := board.NextPlayer()
 	depth := board.CountMoves()
@@ -168,7 +177,7 @@ func getCachedEndings(board *common.Board, solver *MoveSolver) []common.GameEndi
 
 		moveY := board.Throw(move, player)
 
-		ending, ok := solver.cache.Get(board, depth)
+		ending, ok := solver.Cache().Get(board, depth)
 		if !ok {
 			endings[move] = common.NoEnding
 		} else {
@@ -188,4 +197,8 @@ func printGameEndingsLine(endings []common.GameEnding) {
 		displays = append(displays, display)
 	}
 	fmt.Println("| " + strings.Join(displays, " ") + " |")
+}
+
+func retrainDepth(board *common.Board, solver common.IMoveSolver, depth uint) {
+
 }

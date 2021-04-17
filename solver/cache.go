@@ -71,6 +71,10 @@ func (s *EndingCache) Size() uint64 {
 	return s.cachedEntries
 }
 
+func (s *EndingCache) DepthSize(depth uint) int {
+	return len(s.depthCaches[depth])
+}
+
 var leftKey uint64 = 0
 var rightKey uint64 = 0
 

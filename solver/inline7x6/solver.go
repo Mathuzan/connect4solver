@@ -227,6 +227,10 @@ func (s *MoveSolver) SummaryVars() log.Ctx {
 	}
 }
 
+func (s *MoveSolver) Cache() common.ICache {
+	return s.cache
+}
+
 func maximumZeroIndex(nums []uint64) int {
 	maxi := -1
 	for i, num := range nums {

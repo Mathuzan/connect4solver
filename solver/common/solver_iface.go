@@ -11,4 +11,5 @@ type IMoveSolver interface {
 	PreloadCache(board *Board)
 	SaveCache()
 	SummaryVars() log.Ctx
+	Cache() ICache
 }
