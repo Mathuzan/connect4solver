@@ -49,7 +49,7 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 	if depth > 38 {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= 35714285 {
+	if len(s.depthCaches[depth]) >= 35714285 && depth > 16 {
 		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending

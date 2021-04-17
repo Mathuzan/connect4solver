@@ -6,6 +6,7 @@ import (
 )
 
 const maxCacheSize = 1_500_000_000
+const maxUnclearedCacheDepth = 16
 
 type EndingCache struct {
 	depthCaches       []map[uint64]common.Player
@@ -51,7 +52,7 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 	if depth > s.maxCacheDepth {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize {
+	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize && depth > maxUnclearedCacheDepth {
 		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending

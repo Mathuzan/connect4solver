@@ -57,15 +57,19 @@ func Browse(
 			board.Clear()
 		} else if action == "clear_cache" {
 			solver.Cache().ClearCache(uint(x))
+		} else if action == "clear_cache_from" {
+			for d := uint(x); d < uint(board.W*board.H); d++ {
+				solver.Cache().ClearCache(d)
+			}
 		} else if action == "endings" {
 			startTime := time.Now()
 			endings := solver.MovesEndings(board)
-			totalElapsed := time.Since(startTime)
-			logger := log.New(log.Ctx{
-				"solveTime": totalElapsed,
-				"endings":   endings,
-			})
 			if endings != nil {
+				totalElapsed := time.Since(startTime)
+				logger := log.New(log.Ctx{
+					"solveTime": totalElapsed,
+					"endings":   endings,
+				})
 				logger.Info("Board solved", solver.SummaryVars())
 				printEndingsLine(endings, player)
 			}
@@ -82,7 +86,7 @@ func Browse(
 		} else if action == "save" {
 			solver.SaveCache()
 		} else if action == "retrain" {
-			retrainDepth(board, solver, uint(x))
+			retrainSolverDepth(board, solver, uint(x))
 		}
 	}
 }
@@ -109,7 +113,8 @@ func readNextAction() (string, int) {
 			fmt.Println("  c - show cache statistics & cached endings for current board")
 			fmt.Println("  new - start new game")
 			fmt.Println("  clear X - clear cache at given depth")
-			fmt.Println("  retrain X - retrain all cases at given depth")
+			fmt.Println("  clear X+ - clear cache from given depth")
+			fmt.Println("  retrain X - retrain all cases (including worst) until given depth")
 			fmt.Println("  save - save cache file")
 			fmt.Println("  q - quit")
 		} else if command == "" {
@@ -125,12 +130,21 @@ func readNextAction() (string, int) {
 		} else if command == "save" {
 			return "save", 0
 		} else if strings.HasPrefix(command, "clear") {
-			_, err := fmt.Sscanf(command, "clear %d", &x)
-			if err != nil {
-				log.Error("Invalid number", log.Ctx{"error": err})
-				continue
+			if strings.HasSuffix(command, "+") {
+				_, err := fmt.Sscanf(command, "clear %d+", &x)
+				if err != nil {
+					log.Error("Invalid number", log.Ctx{"error": err})
+					continue
+				}
+				return "clear_cache_from", x
+			} else {
+				_, err := fmt.Sscanf(command, "clear %d", &x)
+				if err != nil {
+					log.Error("Invalid number", log.Ctx{"error": err})
+					continue
+				}
+				return "clear_cache", x
 			}
-			return "clear_cache", x
 		} else if strings.HasPrefix(command, "retrain") {
 			_, err := fmt.Sscanf(command, "retrain %d", &x)
 			if err != nil {
@@ -199,6 +213,6 @@ func printGameEndingsLine(endings []common.GameEnding) {
 	fmt.Println("| " + strings.Join(displays, " ") + " |")
 }
 
-func retrainDepth(board *common.Board, solver common.IMoveSolver, depth uint) {
-
+func retrainSolverDepth(board *common.Board, solver common.IMoveSolver, maxDepth uint) {
+	solver.Retrain(board, maxDepth)
 }

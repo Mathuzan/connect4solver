@@ -12,4 +12,5 @@ type IMoveSolver interface {
 	SaveCache()
 	SummaryVars() log.Ctx
 	Cache() ICache
+	Retrain(board *Board, maxDepth uint)
 }

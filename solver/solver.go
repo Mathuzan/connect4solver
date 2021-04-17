@@ -2,6 +2,7 @@ package solver
 
 import (
 	"fmt"
+	"os/signal"
 	"time"
 
 	log "github.com/igrek51/log15"
@@ -16,6 +17,8 @@ type MoveSolver struct {
 	referee    *Referee
 	movesOrder []int
 	interrupt  bool
+
+	tieDepth uint
 
 	startTime          time.Time
 	lastBoardPrintTime time.Time
@@ -49,7 +52,8 @@ func NewMoveSolver(board *common.Board) *MoveSolver {
 		progressBar:        progressbar.Default(progressBarResolution),
 		movesOrder:         movesOrder,
 		referee:            referee,
-		interrupt:          true,
+		interrupt:          false,
+		tieDepth:           uint(board.W*board.H - 1),
 	}
 }
 
@@ -64,9 +68,7 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 			endings = nil
 		}
 	}()
-	if s.interrupt {
-		common.HandleInterrupt(s)
-	}
+	interruptChannel := common.HandleInterrupt(s)
 
 	s.startTime = time.Now()
 	s.lastBoardPrintTime = time.Now()
@@ -89,6 +91,7 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 		}
 	}
 
+	signal.Stop(interruptChannel)
 	return endings
 }
 
@@ -114,22 +117,18 @@ func (s *MoveSolver) bestEndingOnMove(
 		}
 	}
 
-	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= refreshProgressPeriod {
-		s.ReportStatus(board, progressStart, progressEnd)
-		if s.interrupt {
-			panic(common.InterruptError)
-		}
-	}
+	s.reportCycle(board, progressStart)
 
 	if s.referee.HasPlayerWon(board, move, y, player) {
 		return player
 	}
+	if depth == s.tieDepth { // No more moves - Tie
+		return common.Empty
+	}
 
+	// solve further possible moves of nextPlayer, at least one possible move is guaranteed
 	nextPlayer := common.OppositePlayer(player)
-
-	// find further possible moves
-	var bestEnding common.Player = common.Empty // Tie as a default ending (when no more moves)
-	endingProcessed := 0
+	ties := 0
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
 			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
@@ -139,17 +138,19 @@ func (s *MoveSolver) bestEndingOnMove(
 			)
 
 			if moveEnding == nextPlayer { // short-circuit, cant be better than winning
-				return s.cache.Put(board, depth, moveEnding)
+				return s.cache.Put(board, depth, nextPlayer)
 			}
-			// player favors Tie over Lose
-			if endingProcessed == 0 || moveEnding == common.Empty {
-				bestEnding = moveEnding
+			if moveEnding == common.Empty {
+				ties++
 			}
-			endingProcessed++
 		}
 	}
-
-	return s.cache.Put(board, depth, bestEnding)
+	// player favors Tie over Lose
+	if ties > 0 {
+		return s.cache.Put(board, depth, common.Empty)
+	} else {
+		return s.cache.Put(board, depth, player)
+	}
 }
 
 // BestEndingOnMove finds best ending on given next move
@@ -158,7 +159,8 @@ func (s *MoveSolver) BestEndingOnMove(
 	player common.Player,
 	move int,
 ) common.Player {
-	return s.bestEndingOnMove(board, player, move, 0, 1, 0)
+	depth := board.CountMoves()
+	return s.bestEndingOnMove(board, player, move, 0, 1, depth)
 }
 
 func (s *MoveSolver) HasPlayerWon(board *common.Board, move int, y int, player common.Player) bool {
@@ -184,10 +186,18 @@ func (s *MoveSolver) Interrupt() {
 	s.interrupt = true
 }
 
+func (s *MoveSolver) reportCycle(board *common.Board, progressStart float64) {
+	if s.iterations&itReportPeriodMask == 0 && time.Since(s.lastBoardPrintTime) >= refreshProgressPeriod {
+		s.ReportStatus(board, progressStart)
+		if s.interrupt {
+			panic(common.InterruptError)
+		}
+	}
+}
+
 func (s *MoveSolver) ReportStatus(
 	board *common.Board,
 	progress float64,
-	progressEnd float64,
 ) {
 	duration := time.Since(s.startTime)
 	instDuration := time.Since(s.lastBoardPrintTime)
@@ -241,4 +251,97 @@ func maximumZeroIndex(nums []uint64) int {
 		}
 	}
 	return maxi
+}
+
+func (s *MoveSolver) Retrain(board *common.Board, maxDepth uint) {
+	defer func() {
+		if r := recover(); r != nil {
+			err, ok := r.(error)
+			if !ok || !errors.Is(err, common.InterruptError) {
+				panic(r)
+			}
+			log.Debug("Interrupted")
+		}
+	}()
+	interruptChannel := common.HandleInterrupt(s)
+
+	s.startTime = time.Now()
+	s.lastBoardPrintTime = time.Now()
+	s.firstProgress = 0
+	s.iterations = 0
+	s.interrupt = false
+
+	depth := board.CountMoves()
+	player := board.NextPlayer()
+
+	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
+		move := s.movesOrder[moveIndex]
+		progressStart := float64(moveIndex) / float64(board.W)
+		progressEnd := float64(moveIndex+1) / float64(board.W)
+		if board.CanMakeMove(move) {
+			s.retrainEndingOnMove(board, player, move, progressStart, progressEnd, depth, maxDepth)
+		}
+	}
+
+	signal.Stop(interruptChannel)
+}
+
+// solve board without short-circuit features
+func (s *MoveSolver) retrainEndingOnMove(
+	board *common.Board,
+	player common.Player,
+	move int,
+	progressStart float64,
+	progressEnd float64,
+	depth uint,
+	maxDepth uint,
+) common.Player {
+	s.iterations++
+
+	y := board.Throw(move, player)
+	defer board.Revert(move, y)
+
+	if depth > maxDepth && depth <= s.cache.maxCacheDepth {
+		ending, ok := s.cache.Get(board, depth)
+		if ok {
+			s.cache.cacheUsages++
+			return ending
+		}
+	}
+
+	s.reportCycle(board, progressStart)
+
+	if s.referee.HasPlayerWon(board, move, y, player) {
+		return player
+	}
+	if depth == s.tieDepth { // No more moves - Tie
+		return common.Empty
+	}
+
+	// solve further possible moves of nextPlayer, at least one possible move is guaranteed
+	nextPlayer := common.OppositePlayer(player)
+	wins := 0
+	ties := 0
+	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
+		if board.CanMakeMove(s.movesOrder[moveIndex]) {
+			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+				progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
+				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
+				depth+1,
+			)
+
+			if moveEnding == nextPlayer {
+				wins++
+			} else if moveEnding == common.Empty {
+				ties++
+			}
+		}
+	}
+	if wins > 0 {
+		return s.cache.Put(board, depth, nextPlayer)
+	} else if ties > 0 {
+		return s.cache.Put(board, depth, common.Empty)
+	} else {
+		return s.cache.Put(board, depth, player)
+	}
 }

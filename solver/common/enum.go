@@ -19,7 +19,7 @@ const (
 	Win      GameEnding = "\u001b[32;1mWin\u001b[0m"
 	Tie      GameEnding = "\u001b[33;1mTie\u001b[0m"
 	Lose     GameEnding = "\u001b[31;1mLose\u001b[0m"
-	NoEnding GameEnding = "."
+	NoEnding GameEnding = "None"
 )
 
 var PlayerDisplays = map[Player]string{

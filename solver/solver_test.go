@@ -106,6 +106,17 @@ func Test7x6Solver(t *testing.T) {
 	assert.Equal(t, []Player{PlayerA, PlayerB, PlayerA, PlayerB, PlayerA, PlayerB, PlayerA}, endings)
 }
 
+func TestEndWithLastMove(t *testing.T) {
+	board := ParseBoard(`
+	.BBB
+	BBAA
+	AABA
+	ABAA
+	`)
+	solver := NewMoveSolver(board)
+	assert.Equal(t, PlayerB, solver.BestEndingOnMove(board, PlayerB, 0))
+}
+
 func BenchmarkMoveSolver4x4(b *testing.B) {
 	board := NewBoard(WithSize(4, 4), WithWinStreak(4))
 	b.ResetTimer()
