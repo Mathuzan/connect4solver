@@ -301,7 +301,7 @@ func (s *MoveSolver) retrainEndingOnMove(
 	y := board.Throw(move, player)
 	defer board.Revert(move, y)
 
-	if depth > maxDepth && depth <= s.cache.maxCacheDepth {
+	if depth >= maxDepth && depth <= s.cache.maxCacheDepth {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
 			s.cache.cacheUsages++
@@ -324,10 +324,10 @@ func (s *MoveSolver) retrainEndingOnMove(
 	ties := 0
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
-			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+			moveEnding := s.retrainEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
 				progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
 				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
-				depth+1,
+				depth+1, maxDepth,
 			)
 
 			if moveEnding == nextPlayer {

@@ -122,7 +122,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	if s.referee.HasPlayerWon(board, move, y, player) {
 		return player
 	}
-	if depth == s.tieDepth { // No more moves - Tie
+	if depth == 41 { // No more moves - Tie
 		return common.Empty
 	}
 
@@ -301,7 +301,7 @@ func (s *MoveSolver) retrainEndingOnMove(
 	y := board.Throw(move, player)
 	defer board.Revert(move, y)
 
-	if depth > maxDepth && depth <= 38 {
+	if depth >= maxDepth && depth <= 38 {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
 			s.cache.cacheUsages++
@@ -324,10 +324,10 @@ func (s *MoveSolver) retrainEndingOnMove(
 	ties := 0
 	for moveIndex := 0; moveIndex < 7; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
-			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+			moveEnding := s.retrainEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
 				progressStart+float64(moveIndex)*(progressEnd-progressStart)/7.0,
 				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/7.0,
-				depth+1,
+				depth+1, maxDepth,
 			)
 
 			if moveEnding == nextPlayer {

@@ -116,7 +116,7 @@ func readNextAction() (string, int) {
 			fmt.Println("  new - start new game")
 			fmt.Println("  clear X - clear cache at given depth")
 			fmt.Println("  clear X+ - clear cache from given depth")
-			fmt.Println("  retrain X - retrain all cases (including worst) until given depth")
+			fmt.Println("  retrain X - retrain worst scenarios until given depth")
 			fmt.Println("  save - save cache file")
 			fmt.Println("  q - quit")
 		} else if command == "" {
@@ -132,6 +132,9 @@ func readNextAction() (string, int) {
 		} else if command == "save" {
 			return "save", 0
 		} else if strings.HasPrefix(command, "clear") {
+			if command == "clear" {
+				return "clear_cache_from", 0
+			}
 			if strings.HasSuffix(command, "+") {
 				_, err := fmt.Sscanf(command, "clear %d+", &x)
 				if err != nil {
@@ -216,5 +219,14 @@ func printGameEndingsLine(endings []common.GameEnding) {
 }
 
 func retrainSolverDepth(board *common.Board, solver common.IMoveSolver, maxDepth uint) {
+	log.Info("Retraining worst scenarios", log.Ctx{
+		"maxDepth": maxDepth,
+	})
+	startTime := time.Now()
 	solver.Retrain(board, maxDepth)
+	totalElapsed := time.Since(startTime)
+	logger := log.New(log.Ctx{
+		"solveTime": totalElapsed,
+	})
+	logger.Info("Training done", solver.SummaryVars())
 }
