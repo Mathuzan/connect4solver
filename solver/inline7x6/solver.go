@@ -19,16 +19,14 @@ type MoveSolver struct {
 
 	startTime          time.Time
 	lastBoardPrintTime time.Time
-	lastProgressTime   time.Time
-	lastProgress       float64
 	firstProgress      float64
-	etaInst            time.Duration
 	progressBar        *progressbar.ProgressBar
 	iterations         uint64
 	lastIterations     uint64
 }
 
 const progressBarResolution = 1_000_000_000
+const refreshProgressPeriod = 2 * time.Second
 const itReportPeriodMask = 0b11111111111111111111 // modulo 2^20 (1048576) mask
 
 func NewMoveSolver(board *common.Board) *MoveSolver {
@@ -72,10 +70,7 @@ func (s *MoveSolver) MovesEndings(board *common.Board) (endings []common.Player)
 
 	s.startTime = time.Now()
 	s.lastBoardPrintTime = time.Now()
-	s.lastProgressTime = time.Now()
-	s.etaInst = 0
 	s.firstProgress = 0
-	s.lastProgress = 0
 	s.iterations = 0
 	s.interrupt = false
 	endings = make([]common.Player, board.W)
@@ -196,21 +191,15 @@ func (s *MoveSolver) ReportStatus(
 ) {
 	duration := time.Since(s.startTime)
 	instDuration := time.Since(s.lastBoardPrintTime)
-	lastProgressDuration := time.Since(s.lastProgressTime)
 	if s.firstProgress == 0 {
 		s.firstProgress = progress
 	}
 	var eta time.Duration
 	if progress > s.firstProgress && duration > 0 {
-		eta = time.Duration((1 - progress) * float64(duration) / (progress - s.firstProgress))
+		eta = time.Duration((1-progress)*1000/(progress-s.firstProgress)) * (duration - refreshProgressPeriod) / 1000
 	}
-	if progress > s.lastProgress && lastProgressDuration > 30*time.Second {
-		s.etaInst = time.Duration((1 - progress) * float64(lastProgressDuration) / (progress - s.lastProgress))
-		s.lastProgress = progress
-		s.lastProgressTime = time.Now()
-	}
-	iterationsPerSec := common.BigintSeparated(s.iterations * uint64(time.Second) / uint64(duration))
-	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) * uint64(time.Second) / uint64(instDuration))
+	iterationsPerSec := common.BigintSeparated(s.iterations / uint64(duration/time.Second))
+	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) / uint64(instDuration/time.Second))
 	s.lastIterations = s.iterations
 	s.lastBoardPrintTime = time.Now()
 
@@ -220,8 +209,7 @@ func (s *MoveSolver) ReportStatus(
 		"cacheClears":       common.BigintSeparated(s.cache.clears),
 		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
 		"progress":          fmt.Sprintf("%v", progress),
-		"avgEta":            eta,
-		"eta":               s.etaInst,
+		"eta":               eta.Truncate(time.Second),
 		"avgIps":            iterationsPerSec,
 		"ips":               instIterationsPerSec,
 	})

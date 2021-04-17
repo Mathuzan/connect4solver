@@ -38,6 +38,9 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 		}
 	}
 
+	fmt.Println(board.String())
+	printEndingsLine(endings, player)
+
 	if cacheEnabled {
 		solver.SaveCache()
 	}
