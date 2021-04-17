@@ -134,3 +134,20 @@ func TestRevert(t *testing.T) {
 | 0 1 2 3 4 5 6 |
 `)
 }
+
+func TestApplyMoves(t *testing.T) {
+	board := NewBoard(WithSize(7, 6))
+	board.ApplyMoves("0035666")
+	rendered := board.String()
+	AssertEqualTrimmed(t, rendered, `
++---------------+
+| . . . . . . . |
+| . . . . . . . |
+| . . . . . . . |
+| . . . . . . A |
+| B . . . . . B |
+| A . . A . B A |
++---------------+
+| 0 1 2 3 4 5 6 |
+`)
+}

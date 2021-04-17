@@ -3,8 +3,10 @@ package common
 import (
 	"fmt"
 	"math/bits"
+	"strconv"
 	"strings"
 
+	log "github.com/igrek51/log15"
 	"github.com/pkg/errors"
 )
 
@@ -186,6 +188,30 @@ func (b *Board) Clone() *Board {
 		WinStreak: b.WinStreak,
 		State:     state,
 	}
+}
+
+func (b *Board) ApplyMoves(startWithMoves string) *Board {
+	if startWithMoves == "" {
+		return b
+	}
+	for idx, moveStr := range startWithMoves {
+		move, err := strconv.Atoi(string(moveStr))
+		if err != nil {
+			log.Error("Invalid number", log.Ctx{"error": err, "index": idx, "move": moveStr})
+			return b
+		}
+		if move < 0 || move >= b.W {
+			log.Error("Move number is out of range", log.Ctx{"move": move, "index": idx})
+			return b
+		}
+		if !b.CanMakeMove(move) {
+			log.Error("Column is already full", log.Ctx{"move": move, "index": idx})
+			return b
+		}
+		player := b.NextPlayer()
+		b.Throw(move, player)
+	}
+	return b
 }
 
 func ParseBoard(txt string, options ...Option) *Board {

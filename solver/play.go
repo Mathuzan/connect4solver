@@ -16,10 +16,12 @@ func Play(
 	cacheEnabled, hideA, hideB,
 	autoAttackA, autoAttackB,
 	scoresEnabled bool,
+	startWithMoves string,
 ) {
 	rand.Seed(time.Now().UnixNano())
 
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
+	board.ApplyMoves(startWithMoves)
 
 	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {

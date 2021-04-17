@@ -16,8 +16,10 @@ import (
 func Browse(
 	width, height, winStreak int,
 	cacheEnabled bool,
+	startWithMoves string,
 ) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
+	board.ApplyMoves(startWithMoves)
 
 	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {

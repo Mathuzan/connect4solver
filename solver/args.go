@@ -12,7 +12,8 @@ type CliArgs struct {
 	Height    int
 	WinStreak int
 
-	Mode common.Mode
+	Mode      common.Mode
+	StartWith string
 
 	Profile     bool
 	Cache       bool
@@ -42,6 +43,8 @@ func GetArgs() *CliArgs {
 	train := flag.Bool("train", false, "Training mode")
 	play := flag.Bool("play", false, "Playing mode")
 	browse := flag.Bool("browse", false, "Browsing mode for debugging purposes")
+
+	flag.StringVar(&args.StartWith, "startwith", "", "Positions of first consecutive moves to start with (eg. 0016)")
 
 	flag.Parse()
 
