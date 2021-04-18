@@ -322,13 +322,22 @@ func (s *MoveSolver) retrainEndingOnMove(
 	nextPlayer := common.OppositePlayer(player)
 	wins := 0
 	ties := 0
+	var moveEnding common.Player
 	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
-			moveEnding := s.retrainEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
-				progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
-				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
-				depth+1, maxDepth,
-			)
+			if depth+1 < maxDepth {
+				moveEnding = s.retrainEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+					progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
+					progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
+					depth+1, maxDepth,
+				)
+			} else {
+				moveEnding = s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
+					progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
+					progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
+					depth+1,
+				)
+			}
 
 			if moveEnding == nextPlayer {
 				wins++
