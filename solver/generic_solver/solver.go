@@ -1,4 +1,4 @@
-package inline7x6
+package generic_solver
 
 import (
 	"os/signal"
@@ -105,7 +105,7 @@ func (s *MoveSolver) bestEndingOnMove(
 	y := board.Throw(move, player)
 	defer board.Revert(move, y)
 
-	if depth <= 38 {
+	if depth <= s.cache.maxCachedDepth {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
 			s.cache.cacheUsages++
@@ -118,18 +118,18 @@ func (s *MoveSolver) bestEndingOnMove(
 	if s.referee.HasPlayerWon(board, move, y, player) {
 		return player
 	}
-	if depth == 41 { // No more moves - Tie
+	if depth == s.tieDepth { // No more moves - Tie
 		return common.Empty
 	}
 
 	// solve further possible moves of nextPlayer, at least one possible move is guaranteed
 	nextPlayer := common.OppositePlayer(player)
 	ties := 0
-	for moveIndex := 0; moveIndex < 7; moveIndex++ {
+	for moveIndex := 0; moveIndex < board.W; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
 			moveEnding := s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
-				progressStart+float64(moveIndex)*(progressEnd-progressStart)/7.0,
-				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/7.0,
+				progressStart+float64(moveIndex)*(progressEnd-progressStart)/float64(board.W),
+				progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/float64(board.W),
 				depth+1,
 			)
 

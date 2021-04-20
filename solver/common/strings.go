@@ -19,3 +19,15 @@ var numberPrinter *message.Printer = message.NewPrinter(language.Polish)
 func BigintSeparated(num uint64) string {
 	return strings.ReplaceAll(numberPrinter.Sprintf("%d", num), " ", "_")
 }
+
+func MaximumZeroIndex(nums []uint64) int {
+	maxi := -1
+	for i, num := range nums {
+		if num == 0 {
+			maxi = i
+		} else {
+			break
+		}
+	}
+	return maxi
+}

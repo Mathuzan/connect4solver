@@ -6,5 +6,7 @@ type ICache interface {
 	ClearCache(depth uint)
 	Size() uint64
 	DepthSize(depth uint) int
-	ShowStatistics()
+	MaxCachedDepth() uint
+	DepthCaches() []map[uint64]Player
+	SetEntry(depth int, key uint64, value Player)
 }

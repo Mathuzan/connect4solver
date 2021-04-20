@@ -105,26 +105,8 @@ func (s *Referee) HasPlayerWonDiagonal(board *common.Board, x int, y int, player
 		s.counterDiagonalEvaluatorMap[x][y](board, player)
 }
 
-func (s *Referee) HasPlayerWonDiagonalCounter(board *common.Board, startX int, startY int, player common.Player) bool {
-	var binaryRow uint64
-	y := startY + 3
-	for x := startX - 3; x <= startX+3; x++ {
-		if x >= 0 && x < 7 && y >= 0 && y < 6 {
-			if board.GetCell(x, y) == player {
-				binaryRow |= 1 << x
-			}
-		}
-		y--
-	}
-	return s.binaryRowMap[binaryRow]
-}
-
-func getStackSize(columnState uint64) int {
-	return common.StackSizeLookup[columnState]
-}
-
 func (s *Referee) whoWonColumn(columnState uint64) common.Player {
-	stackSize := getStackSize(columnState)
+	stackSize := common.StackSizeLookup[columnState]
 	if stackSize < s.winStreak {
 		return common.Empty
 	}

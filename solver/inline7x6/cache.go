@@ -6,9 +6,10 @@ import (
 )
 
 type EndingCache struct {
-	depthCaches       []map[uint64]common.Player
-	maxCacheDepthSize int
-	maxCacheDepth     uint
+	depthCaches            []map[uint64]common.Player
+	maxCacheDepthSize      int
+	maxCachedDepth         uint
+	maxUnclearedCacheDepth uint
 
 	cachedEntries uint64
 	cacheUsages   uint64
@@ -29,14 +30,15 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	}
 
 	return &EndingCache{
-		depthCaches:       depthCaches,
-		depthClears:       depthClears,
-		maxCacheDepthSize: 35714285,
-		maxCacheDepth:     38,
-		boardW:            boardW,
-		boardH:            boardH,
-		boardW1:           boardW - 1,
-		sideW:             boardW / 2,
+		depthCaches:            depthCaches,
+		depthClears:            depthClears,
+		maxCacheDepthSize:      35714285,
+		maxCachedDepth:         38,
+		maxUnclearedCacheDepth: 16,
+		boardW:                 boardW,
+		boardH:                 boardH,
+		boardW1:                boardW - 1,
+		sideW:                  boardW / 2,
 	}
 }
 
@@ -73,12 +75,9 @@ func (s *EndingCache) DepthSize(depth uint) int {
 	return len(s.depthCaches[depth])
 }
 
-var leftKey uint64 = 0
-var rightKey uint64 = 0
-
 func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
-	leftKey = key[0] | key[1]<<8 | key[2]<<16
-	rightKey = key[6] | key[5]<<8 | key[4]<<16
+	leftKey := key[0] | key[1]<<8 | key[2]<<16
+	rightKey := key[6] | key[5]<<8 | key[4]<<16
 
 	if leftKey <= rightKey {
 		return leftKey | key[3]<<24 | key[4]<<32 | key[5]<<40 | key[6]<<48
@@ -87,22 +86,15 @@ func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
 	return rightKey | key[3]<<24 | key[2]<<32 | key[1]<<40 | key[0]<<48
 }
 
-func (s *EndingCache) ShowStatistics() {
-	for d := uint(0); d < uint(s.boardW*s.boardH); d++ {
-		depthCache := s.depthCaches[d]
-		log.Debug("depth cache", log.Ctx{
-			"depth": d,
-			"size":  len(depthCache),
-		})
-	}
+func (s *EndingCache) MaxCachedDepth() uint {
+	return s.maxCachedDepth
 }
 
-func (s *EndingCache) HighestDepth() int {
-	maxd := 0
-	for d, depthCache := range s.depthCaches {
-		if len(depthCache) > len(s.depthCaches[maxd]) {
-			maxd = d
-		}
-	}
-	return maxd
+func (s *EndingCache) DepthCaches() []map[uint64]common.Player {
+	return s.depthCaches
+}
+
+func (s *EndingCache) SetEntry(depth int, key uint64, value common.Player) {
+	s.depthCaches[depth][key] = value
+	s.cachedEntries++
 }

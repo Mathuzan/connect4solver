@@ -1,4 +1,4 @@
-package solver
+package generic_solver
 
 import (
 	"github.com/igrek51/connect4solver/solver/common"
@@ -6,12 +6,12 @@ import (
 )
 
 const maxCacheSize = 1_500_000_000
-const maxUnclearedCacheDepth = 16
 
 type EndingCache struct {
-	depthCaches       []map[uint64]common.Player
-	maxCacheDepthSize int
-	maxCacheDepth     uint
+	depthCaches            []map[uint64]common.Player
+	maxCacheDepthSize      int
+	maxCachedDepth         uint
+	maxUnclearedCacheDepth uint
 
 	cachedEntries uint64
 	cacheUsages   uint64
@@ -32,14 +32,15 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	}
 
 	return &EndingCache{
-		depthCaches:       depthCaches,
-		depthClears:       depthClears,
-		maxCacheDepthSize: maxCacheSize / (boardW * boardH),
-		maxCacheDepth:     uint(boardW*boardH) - 4,
-		boardW:            boardW,
-		boardH:            boardH,
-		boardW1:           boardW - 1,
-		sideW:             boardW / 2,
+		depthCaches:            depthCaches,
+		depthClears:            depthClears,
+		maxCacheDepthSize:      maxCacheSize / (boardW * boardH),
+		maxCachedDepth:         uint(boardW*boardH) - 4,
+		maxUnclearedCacheDepth: 16,
+		boardW:                 boardW,
+		boardH:                 boardH,
+		boardW1:                boardW - 1,
+		sideW:                  boardW / 2,
 	}
 }
 
@@ -49,10 +50,10 @@ func (s *EndingCache) Get(board *common.Board, depth uint) (ending common.Player
 }
 
 func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player) common.Player {
-	if depth > s.maxCacheDepth {
+	if depth > s.maxCachedDepth {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize && depth > maxUnclearedCacheDepth {
+	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize && depth > s.maxUnclearedCacheDepth {
 		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending
@@ -76,12 +77,9 @@ func (s *EndingCache) DepthSize(depth uint) int {
 	return len(s.depthCaches[depth])
 }
 
-var leftKey uint64 = 0
-var rightKey uint64 = 0
-
 func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
-	leftKey = key[0]
-	rightKey = key[s.boardW1]
+	leftKey := key[0]
+	rightKey := key[s.boardW1]
 	for i := 1; i < s.sideW; i++ {
 		leftKey |= key[i] << (8 * i)
 		rightKey |= key[s.boardW1-i] << (8 * i)
@@ -100,23 +98,15 @@ func (s *EndingCache) reflectedBoardKey(key common.BoardKey) uint64 {
 	return rightKey
 }
 
-func (s *EndingCache) ShowStatistics() {
-	for d := uint(0); d < uint(s.boardW*s.boardH); d++ {
-		depthCache := s.depthCaches[d]
-
-		log.Debug("depth cache", log.Ctx{
-			"depth": d,
-			"size":  len(depthCache),
-		})
-	}
+func (s *EndingCache) MaxCachedDepth() uint {
+	return s.maxCachedDepth
 }
 
-func (s *EndingCache) HighestDepth() int {
-	maxd := 0
-	for d, depthCache := range s.depthCaches {
-		if len(depthCache) > len(s.depthCaches[maxd]) {
-			maxd = d
-		}
-	}
-	return maxd
+func (s *EndingCache) DepthCaches() []map[uint64]common.Player {
+	return s.depthCaches
+}
+
+func (s *EndingCache) SetEntry(depth int, key uint64, value common.Player) {
+	s.depthCaches[depth][key] = value
+	s.cachedEntries++
 }

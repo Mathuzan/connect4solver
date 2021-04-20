@@ -23,13 +23,13 @@ func Browse(
 	board.ApplyMoves(startWithMoves)
 
 	solver := CreateSolver(board)
-	if cacheEnabled && CacheFileExists(board) {
-		solver.PreloadCache(board)
+	if cacheEnabled && common.CacheFileExists(board) {
+		common.MustLoadCache(solver.Cache(), board.W, board.H)
 	}
 
 	if retrainDepth > 0 {
 		retrainSolverDepth(board, solver, uint(retrainDepth))
-		solver.SaveCache()
+		common.MustSaveCache(solver.Cache(), board.W, board.H)
 		return
 	}
 
@@ -83,7 +83,7 @@ func Browse(
 				printEndingsLine(endings, player)
 			}
 		} else if action == "cache" {
-			solver.Cache().ShowStatistics()
+			showCacheStatistics(solver.Cache(), board.W, board.H)
 			depth := board.CountMoves()
 			cachedEndings := getCachedEndings(board, solver)
 			log.Debug("cache statistics", log.Ctx{
@@ -93,7 +93,7 @@ func Browse(
 			})
 			printGameEndingsLine(cachedEndings)
 		} else if action == "save" {
-			solver.SaveCache()
+			common.MustSaveCache(solver.Cache(), board.W, board.H)
 		} else if action == "retrain" {
 			retrainSolverDepth(board, solver, uint(x))
 		}
@@ -236,4 +236,13 @@ func retrainSolverDepth(board *common.Board, solver common.IMoveSolver, maxDepth
 		"solveTime": totalElapsed,
 	})
 	logger.Info("Training done", solver.SummaryVars())
+}
+
+func showCacheStatistics(cache common.ICache, boardW, boardH int) {
+	for d := uint(0); d < uint(boardW*boardH); d++ {
+		log.Debug("depth cache", log.Ctx{
+			"depth": d,
+			"size":  cache.DepthSize(d),
+		})
+	}
 }

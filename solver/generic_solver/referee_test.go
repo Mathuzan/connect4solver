@@ -1,4 +1,4 @@
-package solver
+package generic_solver
 
 import (
 	"testing"

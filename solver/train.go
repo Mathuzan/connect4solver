@@ -14,8 +14,8 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	fmt.Println(board.String())
 
 	solver := CreateSolver(board)
-	if cacheEnabled && CacheFileExists(board) {
-		solver.PreloadCache(board)
+	if cacheEnabled && common.CacheFileExists(board) {
+		common.MustLoadCache(solver.Cache(), board.W, board.H)
 	}
 
 	startTime := time.Now()
@@ -42,7 +42,7 @@ func Train(width, height, winStreak int, cacheEnabled bool) {
 	printEndingsLine(endings, player)
 
 	if cacheEnabled {
-		solver.SaveCache()
+		common.MustSaveCache(solver.Cache(), board.W, board.H)
 	}
 
 	totalElapsed = time.Since(startTime)

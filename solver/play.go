@@ -24,8 +24,8 @@ func Play(
 	board.ApplyMoves(startWithMoves)
 
 	solver := CreateSolver(board)
-	if cacheEnabled && CacheFileExists(board) {
-		solver.PreloadCache(board)
+	if cacheEnabled && common.CacheFileExists(board) {
+		common.MustLoadCache(solver.Cache(), board.W, board.H)
 	}
 
 	for {

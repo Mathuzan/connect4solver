@@ -1,4 +1,4 @@
-package inline7x6
+package common
 
 import (
 	"fmt"
@@ -10,17 +10,16 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	pb "github.com/igrek51/connect4solver/proto"
-	"github.com/igrek51/connect4solver/solver/common"
 )
 
-func SaveCache(cache *EndingCache) error {
-	maxDepth := int(cache.maxCacheDepth / 2)
-	filename := cacheFilename(cache.boardW, cache.boardH)
+func SaveCache(cache ICache, boardW, boardH int) error {
+	maxDepth := int(cache.MaxCachedDepth() / 2)
+	filename := cacheFilename(boardW, boardH)
 
 	log.Debug("Saving cache...", log.Ctx{
 		"filename": filename,
 	})
-	protoCache, entriesLen := cacheToProto(cache, maxDepth)
+	protoCache, entriesLen := cacheToProto(cache, maxDepth, boardW, boardH)
 	outBytes, err := proto.Marshal(protoCache)
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal cache to proto")
@@ -38,43 +37,56 @@ func SaveCache(cache *EndingCache) error {
 	return nil
 }
 
-func LoadCache(board *common.Board) (*EndingCache, error) {
-	filename := cacheFilename(board.W, board.H)
+func LoadCache(cache ICache, boardW, boardH int) error {
+	filename := cacheFilename(boardW, boardH)
 	log.Debug("Loading cache...", log.Ctx{
 		"filename": filename,
 	})
 	in, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, errors.Wrap(err, "error reading file")
+		return errors.Wrap(err, "error reading file")
 	}
 	dephtCaches := &pb.DepthCaches{}
 	if err := proto.Unmarshal(in, dephtCaches); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal protobuf")
+		return errors.Wrap(err, "failed to unmarshal protobuf")
 	}
 
-	cache := protoToCache(dephtCaches, board.W, board.H)
+	protoToCache(dephtCaches, cache, boardW, boardH)
 
 	log.Debug("Cache loaded", log.Ctx{
 		"filename": filename,
 		"entries":  cache.Size(),
-		"maxDepth": cache.HighestDepth(),
 	})
 
-	return cache, nil
+	return nil
 }
 
-func CacheFileExists(board *common.Board) bool {
+func MustSaveCache(cache ICache, boardW, boardH int) {
+	err := SaveCache(cache, boardW, boardH)
+	if err != nil {
+		panic(errors.Wrap(err, "saving cache"))
+	}
+}
+
+func MustLoadCache(cache ICache, boardW, boardH int) {
+	err := LoadCache(cache, boardW, boardH)
+	if err != nil {
+		panic(errors.Wrap(err, "loading cache"))
+	}
+}
+
+func CacheFileExists(board *Board) bool {
 	filename := cacheFilename(board.W, board.H)
 	_, err := os.Stat(filename)
 	return err == nil
 }
 
-func cacheToProto(cache *EndingCache, maxDepth int) (*pb.DepthCaches, uint64) {
+func cacheToProto(cache ICache, maxDepth int, boardW int, boardH int) (*pb.DepthCaches, uint64) {
 	dephtCaches := &pb.DepthCaches{
-		DepthCaches: make([]*pb.DepthCache, len(cache.depthCaches)),
+		DepthCaches: make([]*pb.DepthCache, boardW*boardH),
 	}
 	entriesLen := uint64(0)
-	for d, depthCache := range cache.depthCaches {
+	for d, depthCache := range cache.DepthCaches() {
 		if d <= maxDepth {
 			entriesMap := map[uint64]uint32{}
 			for k, v := range depthCache {
@@ -89,15 +101,12 @@ func cacheToProto(cache *EndingCache, maxDepth int) (*pb.DepthCaches, uint64) {
 	return dephtCaches, entriesLen
 }
 
-func protoToCache(dephtCaches *pb.DepthCaches, boardW int, boardH int) *EndingCache {
-	cache := NewEndingCache(boardW, boardH)
+func protoToCache(dephtCaches *pb.DepthCaches, cache ICache, boardW int, boardH int) {
 	for d, depthCache := range dephtCaches.DepthCaches {
 		for k, v := range depthCache.Entries {
-			cache.depthCaches[d][k] = common.Player(v)
+			cache.SetEntry(d, k, Player(v))
 		}
-		cache.cachedEntries += uint64(len(depthCache.Entries))
 	}
-	return cache
 }
 
 func cacheFilename(boardW, boardH int) string {
