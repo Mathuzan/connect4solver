@@ -17,6 +17,7 @@ func Browse(
 	width, height, winStreak int,
 	cacheEnabled bool,
 	startWithMoves string,
+	retrainDepth int,
 ) {
 	board := common.NewBoard(common.WithSize(width, height), common.WithWinStreak(winStreak))
 	board.ApplyMoves(startWithMoves)
@@ -24,6 +25,12 @@ func Browse(
 	solver := CreateSolver(board)
 	if cacheEnabled && CacheFileExists(board) {
 		solver.PreloadCache(board)
+	}
+
+	if retrainDepth > 0 {
+		retrainSolverDepth(board, solver, uint(retrainDepth))
+		solver.SaveCache()
+		return
 	}
 
 	for {

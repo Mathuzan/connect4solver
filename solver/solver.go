@@ -213,6 +213,11 @@ func (s *MoveSolver) ReportStatus(
 	s.lastIterations = s.iterations
 	s.lastBoardPrintTime = time.Now()
 
+	firstCaches := []int{}
+	for d := uint(0); d < uint(10); d++ {
+		firstCaches = append(firstCaches, s.Cache().DepthSize(d))
+	}
+
 	log.Debug("Currently considered board", log.Ctx{
 		"cacheSize":         common.BigintSeparated(s.cache.Size()),
 		"iterations":        common.BigintSeparated(s.iterations),
@@ -220,8 +225,9 @@ func (s *MoveSolver) ReportStatus(
 		"maxUnclearedDepth": maximumZeroIndex(s.cache.depthClears),
 		"progress":          fmt.Sprintf("%v", progress),
 		"eta":               eta.Truncate(time.Second),
-		"avgIps":            iterationsPerSec,
+		"ipsAvg":            iterationsPerSec,
 		"ips":               instIterationsPerSec,
+		"firstCacheLen":     firstCaches,
 	})
 	fmt.Println(board.String())
 	if s.progressBar != nil {
