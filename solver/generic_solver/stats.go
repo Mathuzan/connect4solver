@@ -29,7 +29,7 @@ func (s *MoveSolver) ReportStatus(
 	}
 	var eta time.Duration
 	if progress > s.firstProgress && duration > 0 {
-		eta = time.Duration((1-progress)*1000/(progress-s.firstProgress)) * (duration - common.RefreshProgressPeriod) / 1000
+		eta = time.Duration((1-progress)*100/(progress-s.firstProgress)) * (duration - common.RefreshProgressPeriod) / 100
 	}
 	iterationsPerSec := common.BigintSeparated(s.iterations / uint64(duration/time.Second))
 	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) / uint64(instDuration/time.Second))

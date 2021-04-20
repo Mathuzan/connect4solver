@@ -8,5 +8,7 @@ message DepthCaches {
 }
 
 message DepthCache {
-    map<uint64, uint32> entries = 1;
+    repeated uint64 boardsPlayerA = 1;
+    repeated uint64 boardsPlayerB = 2;
+    repeated uint64 boardsTie = 3;
 }
