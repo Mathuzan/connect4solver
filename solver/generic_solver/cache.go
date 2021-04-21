@@ -26,14 +26,13 @@ type EndingCache struct {
 
 func NewEndingCache(boardW int, boardH int) *EndingCache {
 	depthCaches := make([]map[uint64]common.Player, boardW*boardH)
-	depthClears := make([]uint64, boardW*boardH)
 	for i := uint(0); i < uint(boardW*boardH); i++ {
 		depthCaches[i] = make(map[uint64]common.Player)
 	}
 
 	return &EndingCache{
 		depthCaches:            depthCaches,
-		depthClears:            depthClears,
+		depthClears:            make([]uint64, boardW*boardH),
 		maxCacheDepthSize:      maxCacheSize / (boardW * boardH),
 		maxCachedDepth:         uint(boardW*boardH) - 4,
 		maxUnclearedCacheDepth: 16,
@@ -53,7 +52,7 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 	if depth > s.maxCachedDepth {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize && depth > s.maxUnclearedCacheDepth {
+	if s.DepthSize(depth) >= s.maxCacheDepthSize && depth > s.maxUnclearedCacheDepth {
 		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending
@@ -63,7 +62,7 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 
 func (s *EndingCache) ClearCache(depth uint) {
 	log.Debug("clearing cache", log.Ctx{"depth": depth})
-	s.cachedEntries -= uint64(len(s.depthCaches[depth]))
+	s.cachedEntries -= uint64(s.DepthSize(depth))
 	s.depthCaches[depth] = make(map[uint64]common.Player)
 	s.depthClears[depth]++
 	s.clears++
