@@ -48,6 +48,8 @@ func GetArgs() *CliArgs {
 	flag.StringVar(&args.StartWith, "startwith", "", "Positions of first consecutive moves to start with (eg. 0016)")
 	flag.IntVar(&args.RetrainDepth, "retrain", -1, "Retrain worst scenarios until given depth")
 
+	cacheLimit := flag.Int("cache-limit", 0, "Cache memory limit (number of entries)")
+
 	flag.Parse()
 
 	if boardSize != nil && *boardSize != "" {
@@ -65,6 +67,10 @@ func GetArgs() *CliArgs {
 	}
 	if *browse {
 		args.Mode = common.BrowseMode
+	}
+
+	if *cacheLimit > 0 {
+		common.CacheSizeLimit = *cacheLimit
 	}
 
 	return args

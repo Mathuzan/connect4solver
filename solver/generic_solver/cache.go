@@ -5,8 +5,6 @@ import (
 	log "github.com/igrek51/log15"
 )
 
-const maxCacheSize = 1_500_000_000
-
 type EndingCache struct {
 	depthCaches            []map[uint64]common.Player
 	maxCacheDepthSize      int
@@ -33,7 +31,7 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	return &EndingCache{
 		depthCaches:            depthCaches,
 		depthClears:            make([]uint64, boardW*boardH),
-		maxCacheDepthSize:      maxCacheSize / (boardW * boardH),
+		maxCacheDepthSize:      common.CacheSizeLimit / (boardW * boardH),
 		maxCachedDepth:         uint(boardW*boardH) - 4,
 		maxUnclearedCacheDepth: 16,
 		boardW:                 boardW,

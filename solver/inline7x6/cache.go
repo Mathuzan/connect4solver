@@ -32,7 +32,7 @@ func NewEndingCache(boardW int, boardH int) *EndingCache {
 	return &EndingCache{
 		depthCaches:            depthCaches,
 		depthClears:            depthClears,
-		maxCacheDepthSize:      35714285,
+		maxCacheDepthSize:      common.CacheSizeLimit / (boardW * boardH),
 		maxCachedDepth:         38,
 		maxUnclearedCacheDepth: 16,
 		boardW:                 boardW,
@@ -51,7 +51,7 @@ func (s *EndingCache) Put(board *common.Board, depth uint, ending common.Player)
 	if depth > 38 {
 		return ending
 	}
-	if len(s.depthCaches[depth]) >= 35714285 && depth > 16 {
+	if len(s.depthCaches[depth]) >= s.maxCacheDepthSize && depth > 16 {
 		s.ClearCache(depth)
 	}
 	s.depthCaches[depth][s.reflectedBoardKey(board.State)] = ending

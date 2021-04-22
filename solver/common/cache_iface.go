@@ -1,5 +1,7 @@
 package common
 
+var CacheSizeLimit int = 1_500_000_000
+
 type ICache interface {
 	Get(board *Board, depth uint) (ending Player, ok bool)
 	Put(board *Board, depth uint, ending Player) Player
