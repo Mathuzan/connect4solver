@@ -23,9 +23,11 @@ type MoveSolver struct {
 	startTime          time.Time
 	lastBoardPrintTime time.Time
 	firstProgress      float64
+	lastProgress       float64
 	progressBar        *progressbar.ProgressBar
 	iterations         uint64
 	lastIterations     uint64
+	retrainMaxDepth    uint
 }
 
 func NewMoveSolver(board *common.Board) *MoveSolver {

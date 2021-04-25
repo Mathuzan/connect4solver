@@ -33,8 +33,10 @@ func (s *MoveSolver) ReportStatus(
 	}
 	iterationsPerSec := common.BigintSeparated(s.iterations / uint64(duration/time.Second))
 	instIterationsPerSec := common.BigintSeparated((s.iterations - s.lastIterations) / uint64(instDuration/time.Second))
+	progressPerSec := (progress - s.lastProgress) / float64(instDuration/time.Second)
 	s.lastIterations = s.iterations
 	s.lastBoardPrintTime = time.Now()
+	s.lastProgress = progress
 
 	firstCaches := []int{}
 	for d := uint(0); d < uint(10); d++ {
@@ -47,6 +49,7 @@ func (s *MoveSolver) ReportStatus(
 		"cacheClears":       common.BigintSeparated(s.cache.clears),
 		"maxUnclearedDepth": common.MaximumZeroIndex(s.cache.depthClears),
 		"progress":          fmt.Sprintf("%v", progress),
+		"progressPerSec":    fmt.Sprintf("%v", progressPerSec),
 		"eta":               eta.Truncate(time.Second),
 		"itsAvg":            iterationsPerSec,
 		"its":               instIterationsPerSec,

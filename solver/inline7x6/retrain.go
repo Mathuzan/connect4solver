@@ -27,6 +27,7 @@ func (s *MoveSolver) Retrain(board *common.Board, maxDepth uint) {
 	s.firstProgress = 0
 	s.iterations = 0
 	s.interrupt = false
+	s.retrainMaxDepth = maxDepth
 
 	depth := board.CountMoves()
 	player := board.NextPlayer()
@@ -36,7 +37,7 @@ func (s *MoveSolver) Retrain(board *common.Board, maxDepth uint) {
 		progressStart := float64(moveIndex) / float64(board.W)
 		progressEnd := float64(moveIndex+1) / float64(board.W)
 		if board.CanMakeMove(move) {
-			s.retrainEndingOnMove(board, player, move, progressStart, progressEnd, depth, maxDepth)
+			s.retrainEndingOnMove(board, player, move, progressStart, progressEnd, depth)
 		}
 	}
 
@@ -51,14 +52,13 @@ func (s *MoveSolver) retrainEndingOnMove(
 	progressStart float64,
 	progressEnd float64,
 	depth uint,
-	maxDepth uint,
 ) common.Player {
 	s.iterations++
 
 	y := board.Throw(move, player)
 	defer board.Revert(move, y)
 
-	if depth >= maxDepth && depth <= 38 {
+	if depth >= s.retrainMaxDepth && depth <= 38 {
 		ending, ok := s.cache.Get(board, depth)
 		if ok {
 			s.cache.cacheUsages++
@@ -82,11 +82,11 @@ func (s *MoveSolver) retrainEndingOnMove(
 	var moveEnding common.Player
 	for moveIndex := 0; moveIndex < 7; moveIndex++ {
 		if board.CanMakeMove(s.movesOrder[moveIndex]) {
-			if depth+1 < maxDepth {
+			if depth+1 < s.retrainMaxDepth {
 				moveEnding = s.retrainEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
 					progressStart+float64(moveIndex)*(progressEnd-progressStart)/7.0,
 					progressStart+float64(moveIndex+1)*(progressEnd-progressStart)/7.0,
-					depth+1, maxDepth,
+					depth+1,
 				)
 			} else {
 				moveEnding = s.bestEndingOnMove(board, nextPlayer, s.movesOrder[moveIndex],
