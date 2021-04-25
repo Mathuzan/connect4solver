@@ -14,6 +14,8 @@ AI algorithm checks every possible move, traversing the decision tree to the ver
 3. Build: `./build.sh`
 4. Play interactive game: `./c4solver`
 
+![](docs/play-7x6.gif)
+
 ## Building
 To build, install [Go](https://golang.org/doc/install) and run:
 ```bash
@@ -42,7 +44,7 @@ Start a game in an interactive playing mode:
 ./c4solver
 ```
 
-Before making each move, you will see what game endings a particular move leads to (assuming you play with a best, faultless opponent).
+Before making each move, you will see what best game ending a particular move leads to (assuming you play with a best, faultless opponent).
 You can play against computer AI or analyze each player's moves, showing best game endings for moves (**W** - Win, **T** - Tie, **L** - Lose):
 ![](docs/play-6x5.gif)
 
@@ -111,6 +113,7 @@ Still, it takes around a week to solve `7x6` board since number of possible comb
 - solving time: 176 hours (about week),
 - over `2_580_000_000_000` iterations (4/7 of all possible boards due to mirrored boards trick),
 - maximum depth kept in cache file: 16 (after making 16 moves it's really quick to solve the board without help from precalculated results)
+- Usage: 16 GB memory, 1 CPU
 
 ## Testing
 ```bash
