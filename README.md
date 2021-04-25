@@ -8,6 +8,12 @@ AI algorithm checks every possible move, traversing the decision tree to the ver
 ## Game Rules
 > Connect Four is a two-player board game, in which the players take turns dropping colored discs into a seven-column, six-row vertically suspended grid. The pieces fall straight down, occupying the lowest available space within the column. The objective of the game is to be the first to form a horizontal, vertical, or diagonal line of four of one's own discs.
 
+## Quickstart
+1. Clone repo: `git clone https://github.com/igrek51/connect4solver && cd connect4solver`
+2. Download precalculated endgames: `./cache/pull.sh`
+3. Build: `./build.sh`
+4. Play interactive game: `./c4solver`
+
 ## Building
 To build, install [Go](https://golang.org/doc/install) and run:
 ```bash
@@ -28,7 +34,7 @@ The following example proves that on 7x6 board, first player can always force a 
 ![](docs/solved-7x6.png)
 
 Precalculating every possible scenario and traversing the decision tree might take a long time on large boards for the first time. 
-However, cached results are stored in protobuf format and will be used again when playing a game.
+However, cached endgames are stored in protobuf format and will be used again when playing a game.
 
 ### Playing mode
 Start a game in an interactive playing mode:
@@ -56,6 +62,8 @@ Usage of ./c4solver:
     	Make player B move automatically
   -browse
     	Browsing mode for debugging purposes
+  -cache-limit int
+    	Cache memory limit (number of entries)
   -height int
     	board height (default 6)
   -hide-a
@@ -68,10 +76,14 @@ Usage of ./c4solver:
     	Playing mode
   -profile
     	Enable pprof CPU profiling
+  -retrain int
+    	Retrain worst scenarios until given depth (default -1)
   -scores
     	Show scores of each move, analyzing deep results
   -size string
     	board size (eg. 7x6)
+  -startwith string
+    	Positions of first consecutive moves to start with (eg. 0016)
   -train
     	Training mode
   -width int
@@ -112,7 +124,7 @@ go test --bench=. ./...
 
 ## Profiling
 ```bash
-./build.sh && ./c4solver --profile
+./build.sh && ./c4solver --profile --train --size 5x5 --nocache
 go tool pprof -http=:8080 cpuprof.prof
 ```
 This produces the following CPU profiling graph, showing the places where CPU spends most of the time for further optimizations:  
