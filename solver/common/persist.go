@@ -17,7 +17,7 @@ func SaveCache(cache ICache, boardW, boardH int) error {
 	maxDepth := int(cache.MaxCachedDepth() / 2)
 	filename := cacheFilename(boardW, boardH)
 
-	log.Debug("Converting to protobuf struct...", log.Ctx{
+	log.Debug("Encoding to protobuf struct...", log.Ctx{
 		"filename": filename,
 	})
 	startTime := time.Now()
@@ -65,7 +65,7 @@ func LoadCache(cache ICache, boardW, boardH int) error {
 	if err := proto.Unmarshal(in, dephtCaches); err != nil {
 		return errors.Wrap(err, "failed to unmarshal protobuf")
 	}
-	log.Debug("Converting protobuf struct...", log.Ctx{
+	log.Debug("Decoding from protobuf struct...", log.Ctx{
 		"splitTime": time.Since(startTime),
 	})
 

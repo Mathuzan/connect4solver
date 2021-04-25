@@ -44,7 +44,12 @@ func Play(
 		fmt.Println(board.String())
 		showHints := (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB)
 		if showHints {
-			printEndingsLine(endings, player)
+			if endings != nil {
+				printEndingsLine(endings, player)
+			} else {
+				cachedEndings := getCachedEndings(board, solver)
+				printGameEndingsLine(cachedEndings)
+			}
 			if scoresEnabled {
 				log.Info("Estimated move scores", log.Ctx{"scores": scores})
 			}
