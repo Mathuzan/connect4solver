@@ -1,5 +1,9 @@
 # c4solver
-`c4solver` is "Connect 4" Game solver written in Go. It finds winning strategy in "Connect Four" game (also known as "Four in a row"). The solver proves that on `7x6` board, first player has a winning strategy (can always win).
+`c4solver` is "Connect 4" Game solver written in Go. 
+It finds a winning strategies in "Connect Four" game (also known as "Four in a row").
+For instance, the solver proves that on *7x6* board, first player has a winning strategy (can always win regardless opponent's moves).
+
+AI algorithm checks every possible move, traversing the decision tree to the very end, when solving the board.
 
 ## Game Rules
 > Connect Four is a two-player board game, in which the players take turns dropping colored discs into a seven-column, six-row vertically suspended grid. The pieces fall straight down, occupying the lowest available space within the column. The objective of the game is to be the first to form a horizontal, vertical, or diagonal line of four of one's own discs.
@@ -7,34 +11,36 @@
 ## Building
 To build, install [Go](https://golang.org/doc/install) and run:
 ```bash
-go mod download
-go build -o c4solver
+go mod download # download dependencies
+go build -o c4solver # build ./c4solver binary
 ```
 
 ## Running
 ### Training mode
-Run training mode to evaluate cached results, precalculating every possible scenario:
+In first place, run training mode to evaluate cached results, precalculating every possible scenario:
 ![](docs/train5x5.gif)
 
-The following proves that on 7x6 board, first player has winning strategy:
+The following example proves that on 7x6 board, first player can always force a win by starting in the middle column:
 ```bash
 ./c4solver --train --size 7x6
 ```
 
 ![](docs/solved-7x6.png)
 
-Precalculating every possible scenario and traversing the decision tree might take a long time on large boards for the first time. Cached results are stored in protobuf format and will be used when playing a game.
+Precalculating every possible scenario and traversing the decision tree might take a long time on large boards for the first time. 
+However, cached results are stored in protobuf format and will be used again when playing a game.
 
 ### Playing mode
-Start a game in playing mode:
+Start a game in an interactive playing mode:
 ```bash
 ./c4solver
 ```
 
-You can play against computer AI or analyze each player moves, showing best game endings for moves (**W** - Win, **T** - Tie, **L** - Lose):
+Before making each move, you will see what game endings a particular move leads to (assuming you play with a best, faultless opponent).
+You can play against computer AI or analyze each player's moves, showing best game endings for moves (**W** - Win, **T** - Tie, **L** - Lose):
 ![](docs/play-6x5.gif)
 
-If you want to challenge yourself versus Unbeatable "C4" AI, you can hide the move hints for yourself and enable automatic moves for computer player (Autoattack feature):
+If you want to challenge yourself versus "Unbeatable C4" AI, you can hide the move hints for yourself and enable automatic moves for computer player (Autoattack feature):
 ```bash
 ./c4solver --play --size 7x6 --autoattack-a --hide-b
 ```
@@ -75,15 +81,15 @@ Usage of ./c4solver:
 ```
 
 ## Search algorithm
-AI algorithm solves the board to the very end, while traversing the decision tree. It is based on minimax decision rule.
+AI algorithm strongly solves the board, traversing the decision tree to the very end. It is based on minimax decision rule.
 While on 7x6 board there are `4,531,985,219,092` possible positions, some tricks were used to improve search algorithm performance:
-- Representing whole board as binary number,
-- Checking against winning condition using fast bitwise operators (eg. XOR with bitwise shift to find 4 consecutive pieces),
+- Representing whole board as a binary number (49 bits is enough),
+- Winning condition checked using fast bitwise operators (eg. XOR with bitwise shift to find 4 consecutive pieces),
 - Caching best game endings for later boards (transposition table) - different moves sequences lead to the same board,
 - Disregarding mirrored boards - reflected boards can be treated as the same,
 - Alpha-beta pruning - Short-circuit if winning result is found,
-- Move ordering heuristics - start from middle moves to find winning strategy faster,
-- Checking only current player's move local neighbourhood when checking winning condition - don't need to check all rows & columns each time.
+- Move ordering heuristics - start from middle moves to find winning strategy earlier,
+- Consider only current player's move local neighbourhood when checking winning condition - don't need to check all rows & columns each time, player can win only in his move.
 
 ## Results
 The optimized solver algorithm is able to consider over 4 millions boards per second, running on a regular laptop.
