@@ -33,7 +33,7 @@ var ShortGameEndingDisplays = map[GameEnding]string{
 	Win:      "\u001b[32;1mW\u001b[0m",
 	Tie:      "\u001b[33;1mT\u001b[0m",
 	Lose:     "\u001b[31;1mL\u001b[0m",
-	NoEnding: ".",
+	NoEnding: "-",
 }
 
 func (p Player) String() string {

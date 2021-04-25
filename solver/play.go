@@ -30,26 +30,25 @@ func Play(
 
 	for {
 		startTime := time.Now()
-
 		endings := solver.MovesEndings(board)
+		if endings == nil {
+			endings = getCachedPlayerEndgames(board, solver)
+		}
+
 		player := board.NextPlayer()
 		scores := estimateMoveScores(solver, endings, player, board, scoresEnabled)
 		totalElapsed := time.Since(startTime)
 
 		logger := log.New(log.Ctx{
 			"solveTime": totalElapsed,
+			"depth":     board.CountMoves(),
 		})
 		logger.Info("Board solved", solver.SummaryVars())
 
 		fmt.Println(board.String())
 		showHints := (player == common.PlayerA && !hideA) || (player == common.PlayerB && !hideB)
 		if showHints {
-			if endings != nil {
-				printEndingsLine(endings, player)
-			} else {
-				cachedEndings := getCachedEndings(board, solver)
-				printGameEndingsLine(cachedEndings)
-			}
+			printEndingsLine(endings, player)
 			if scoresEnabled {
 				log.Info("Estimated move scores", log.Ctx{"scores": scores})
 			}
@@ -128,7 +127,7 @@ func readNextMove(
 			log.Error("Move number is out of range")
 			continue
 		}
-		if endings != nil && endings[move] == common.NoMove {
+		if endings != nil && !board.CanMakeMove(move) {
 			log.Error("Column is already full")
 			continue
 		}
@@ -140,10 +139,6 @@ func estimateMoveScores(
 	solver common.IMoveSolver, endings []common.Player,
 	player common.Player, board *common.Board, scoresEnabled bool,
 ) []int {
-	if endings == nil {
-		return nil
-	}
-
 	scores := make([]int, len(endings))
 	opponent := common.OppositePlayer(player)
 
@@ -161,12 +156,12 @@ func estimateMoveScores(
 		} else if solver.HasPlayerWon(board, move, moveY, opponent) {
 			score = -100
 		} else {
+			if ending == player {
+				score += 10
+			} else if ending == opponent {
+				score -= 10
+			}
 			if scoresEnabled {
-				if ending == player {
-					score += 10
-				} else if ending == opponent {
-					score -= 10
-				}
 				nextEndings := solver.MovesEndings(board)
 				for _, nextEnding := range nextEndings {
 					if nextEnding == player {
@@ -174,12 +169,6 @@ func estimateMoveScores(
 					} else if nextEnding == opponent {
 						score--
 					}
-				}
-			} else {
-				if ending == player {
-					score = 10
-				} else if ending == opponent {
-					score = -10
 				}
 			}
 		}
@@ -191,10 +180,6 @@ func estimateMoveScores(
 }
 
 func findBestMove(scores []int) int {
-	if scores == nil {
-		return 0
-	}
-
 	order := rand.Perm(len(scores)) // get random if there are many maximum values
 	maxi := order[0]
 	for _, move := range order {
@@ -203,4 +188,28 @@ func findBestMove(scores []int) int {
 		}
 	}
 	return maxi
+}
+
+func getCachedPlayerEndgames(board *common.Board, solver common.IMoveSolver) []common.Player {
+	endings := make([]common.Player, board.W)
+	player := board.NextPlayer()
+	depth := board.CountMoves()
+	for move := 0; move < board.W; move++ {
+		if !board.CanMakeMove(move) {
+			endings[move] = common.NoMove
+			continue
+		}
+
+		moveY := board.Throw(move, player)
+
+		ending, ok := solver.Cache().Get(board, depth)
+		if !ok {
+			endings[move] = common.NoMove
+		} else {
+			endings[move] = ending
+		}
+
+		board.Revert(move, moveY)
+	}
+	return endings
 }
